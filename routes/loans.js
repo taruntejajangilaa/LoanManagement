@@ -57,11 +57,44 @@ router.get('/', async (req, res) => {
 // Create new loan
 router.post('/', async (req, res) => {
   try {
+    console.log('Received loan creation request:', req.body);
+    
+    // Validate required fields
+    const { borrowerName, amount, startDate, loanType } = req.body;
+    if (!borrowerName || !amount || !startDate || !loanType) {
+      return res.status(400).json({ 
+        message: 'Missing required fields',
+        required: ['borrowerName', 'amount', 'startDate', 'loanType'],
+        received: req.body 
+      });
+    }
+
+    // Validate loan type specific fields
+    if (loanType === 'personal' && !req.body.term) {
+      return res.status(400).json({ 
+        message: 'Term is required for personal loans',
+        received: req.body 
+      });
+    }
+
+    if (loanType === 'creditCard' && !req.body.cardNumber) {
+      return res.status(400).json({ 
+        message: 'Card number is required for credit cards',
+        received: req.body 
+      });
+    }
+
     const loan = new Loan(req.body);
     const newLoan = await loan.save();
+    console.log('Loan created successfully:', newLoan);
     res.status(201).json(newLoan);
   } catch (error) {
-    res.status(400).json({ message: error.message });
+    console.error('Error creating loan:', error);
+    res.status(400).json({ 
+      message: error.message,
+      details: error.errors || {},
+      receivedData: req.body 
+    });
   }
 });
 
