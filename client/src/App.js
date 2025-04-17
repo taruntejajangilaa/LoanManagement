@@ -12,13 +12,11 @@ import {
   TextField,
   AppBar,
   Toolbar,
-  IconButton,
   Card,
   CardContent,
   CardActions,
   Chip,
   Divider,
-  Tooltip,
   Snackbar,
   Alert,
   DialogContentText,
@@ -28,14 +26,12 @@ import {
 import AddIcon from '@mui/icons-material/Add';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import PaymentIcon from '@mui/icons-material/Payment';
-import MoneyOffIcon from '@mui/icons-material/MoneyOff';
 import EditIcon from '@mui/icons-material/Edit';
-import DeleteIcon from '@mui/icons-material/Delete';
 import AssessmentIcon from '@mui/icons-material/Assessment';
 import { createTheme, ThemeProvider } from '@mui/material/styles';
 import axios from 'axios';
 import LoanDetails from './components/LoanDetails';
-import { Routes, Route, Navigate, useNavigate, Link as RouterLink, useLocation } from 'react-router-dom';
+import { Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom';
 import PersonalLoanOutstandings from './components/PersonalLoanOutstandings';
 import GoldLoanOutstandings from './components/GoldLoanOutstandings';
 
@@ -78,7 +74,6 @@ function App() {
   const [selectedLoan, setSelectedLoan] = useState(null);
   const [selectedPaymentLoan, setSelectedPaymentLoan] = useState(null);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
-  const [openAddLoanDialog, setOpenAddLoanDialog] = useState(false);
   const [editLoanData, setEditLoanData] = useState({
     borrowerName: '',
     amount: '',
@@ -254,25 +249,6 @@ function App() {
     }
   };
 
-  const handlePrepaymentOpen = (loan) => {
-    if (!loan || !loan._id) {
-      setSnackbar({
-        open: true,
-        message: 'Invalid loan selected',
-        severity: 'error'
-      });
-      return;
-    }
-    setSelectedLoan(loan._id);
-    setPrepaymentOpen(true);
-    setPrepaymentData({
-      amount: '',
-      date: new Date().toISOString().split('T')[0],
-      borrowerName: loan.borrowerName,
-      loanAmount: loan.amount
-    });
-  };
-
   const handlePrepaymentClose = () => {
     setPrepaymentOpen(false);
     setSelectedLoan(null);
@@ -282,7 +258,8 @@ function App() {
     });
   };
 
-  const handlePrepaymentSubmit = async () => {
+  const handlePrepaymentSubmit = async (e) => {
+    e.preventDefault();
     try {
       if (!selectedLoan) {
         setSnackbar({
@@ -436,136 +413,6 @@ function App() {
       </>
     );
   };
-
-  // Modify gold loan card display
-  const renderGoldLoanCard = (loan) => (
-    <Card sx={{ 
-      height: '100%', 
-      display: 'flex', 
-      flexDirection: 'column',
-      '&:hover': {
-        boxShadow: 6
-      }
-    }}>
-      <CardContent sx={{ flexGrow: 1, p: { xs: 2, sm: 3 } }}>
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
-          <Typography variant="h6" component="div" sx={{ 
-            fontWeight: 600,
-            fontSize: { xs: '1rem', sm: '1.1rem' }
-          }}>
-            {loan.borrowerName}
-          </Typography>
-          <Chip
-            label={loan.status}
-            color={getStatusColor(loan.status)}
-            size="small"
-          />
-        </Box>
-        <Divider sx={{ my: 2 }} />
-        <Grid container spacing={{ xs: 1, sm: 2 }}>
-          <Grid item xs={6}>
-            <Box sx={{ 
-              p: { xs: 1, sm: 2 }, 
-              borderRadius: 1, 
-              bgcolor: 'rgba(180, 83, 9, 0.05)',
-              textAlign: 'center'
-            }}>
-              <Typography variant="body2" color="text.secondary">
-                Loan Amount
-              </Typography>
-              <Typography variant="h6" sx={{ fontSize: { xs: '0.9rem', sm: '1rem' } }}>
-                ₹{loan.amount.toLocaleString()}
-              </Typography>
-            </Box>
-          </Grid>
-          <Grid item xs={6}>
-            <Box sx={{ 
-              p: { xs: 1, sm: 2 }, 
-              borderRadius: 1, 
-              bgcolor: 'rgba(180, 83, 9, 0.05)',
-              textAlign: 'center'
-            }}>
-              <Typography variant="body2" color="text.secondary">
-                Interest Rate
-              </Typography>
-              <Typography variant="h6" sx={{ fontSize: { xs: '0.9rem', sm: '1rem' } }}>
-                {loan.interestRate}%
-              </Typography>
-            </Box>
-          </Grid>
-          <Grid item xs={12}>
-            <Box sx={{ 
-              p: { xs: 1, sm: 2 }, 
-              borderRadius: 1, 
-              bgcolor: 'rgba(180, 83, 9, 0.05)',
-              textAlign: 'center'
-            }}>
-              <Typography variant="body2" color="text.secondary">
-                Start Date
-              </Typography>
-              <Typography variant="h6" sx={{ fontSize: { xs: '0.9rem', sm: '1rem' } }}>
-                {new Date(loan.startDate).toLocaleDateString()}
-              </Typography>
-            </Box>
-          </Grid>
-        </Grid>
-      </CardContent>
-      <CardActions sx={{ mt: 'auto', p: 2, display: 'flex', flexDirection: 'column', gap: 1 }}>
-        <Button
-          fullWidth
-          variant="contained"
-          startIcon={<VisibilityIcon />}
-          onClick={() => handleViewDetails(loan._id)}
-          sx={{ 
-            bgcolor: '#b45309',
-            '&:hover': {
-              bgcolor: '#a34808',
-            }
-          }}
-        >
-          View Details
-        </Button>
-        <Button
-          fullWidth
-          variant="contained"
-          startIcon={<PaymentIcon />}
-          onClick={() => handlePaymentDialogOpen(loan)}
-          sx={{
-            bgcolor: '#b45309',
-            '&:hover': {
-              bgcolor: '#a34808',
-            }
-          }}
-        >
-          Make Payment
-        </Button>
-        <Button
-          fullWidth
-          variant="outlined"
-          startIcon={<EditIcon />}
-          onClick={() => handleEditOpen(loan)}
-          sx={{
-            borderColor: '#b45309',
-            color: '#b45309',
-            '&:hover': {
-              borderColor: '#a34808',
-              bgcolor: 'rgba(180, 83, 9, 0.04)',
-            }
-          }}
-        >
-          Edit Loan
-        </Button>
-        <Button
-          fullWidth
-          variant="outlined"
-          color="error"
-          onClick={() => handleDeleteOpen(loan)}
-        >
-          Delete Loan
-        </Button>
-      </CardActions>
-    </Card>
-  );
 
   // Add handler for edit button click
   const handleEditOpen = (loan) => {
@@ -726,12 +573,12 @@ function App() {
       });
       
       if (response.data) {
+        await fetchLoans();
         setSnackbar({
           open: true,
           message: 'Payment added successfully',
           severity: 'success'
         });
-        fetchLoans();
         handlePaymentDialogClose();
       }
     } catch (error) {
@@ -742,11 +589,6 @@ function App() {
         severity: 'error'
       });
     }
-  };
-
-  const handleAddSpent = (cardId) => {
-    setSelectedLoan(cardId);
-    setSpentDialogOpen(true);
   };
 
   const handleSpentSubmit = async () => {
@@ -926,15 +768,6 @@ function App() {
                 </Button>
                 <Button
                   fullWidth
-                  variant="contained"
-                  color="secondary"
-                  startIcon={<PaymentIcon />}
-                  onClick={() => handlePaymentDialogOpen(loan)}
-                >
-                  Make Payment
-                </Button>
-                <Button
-                  fullWidth
                   variant="outlined"
                   color="primary"
                   startIcon={<EditIcon />}
@@ -959,7 +792,7 @@ function App() {
   );
 
   const renderGoldLoans = () => (
-    <Box sx={{ mb: 4 }}>
+    <Box sx={{ maxWidth: '1200px', mx: 'auto', px: { xs: 1, sm: 2 } }}>
       <Box sx={{ 
         display: 'flex', 
         flexDirection: { xs: 'column', sm: 'row' },
@@ -968,9 +801,9 @@ function App() {
         gap: 2
       }}>
         <Typography 
-          variant="h4" 
+          variant="h5" 
           sx={{ 
-            fontWeight: 700,
+            fontWeight: 600,
             background: 'linear-gradient(45deg, #b8860b 30%, #daa520 90%)',
             WebkitBackgroundClip: 'text',
             WebkitTextFillColor: 'transparent',
@@ -982,7 +815,8 @@ function App() {
         <Box sx={{ 
           display: 'flex', 
           gap: 2,
-          flexWrap: 'wrap'
+          flexWrap: 'wrap',
+          ml: { sm: 'auto' }
         }}>
           <Button
             variant="contained"
@@ -1372,50 +1206,56 @@ function App() {
             </Box>
           </Toolbar>
           <Paper elevation={0} sx={{ borderBottom: 1, borderColor: 'divider' }}>
-            <Tabs 
-              value={value} 
-              onChange={handleChange}
-              variant="scrollable"
-              scrollButtons="auto"
-              sx={{ 
-                '& .MuiTab-root': { 
-                  minWidth: { xs: 100, sm: 150 },
-                  fontSize: { xs: '0.8rem', sm: '0.9rem' }
-                },
-                '& .MuiTabs-indicator': {
-                  height: 3,
-                  bgcolor: 'primary.main'
-                }
-              }}
-            >
-              <Tab 
-                label="Personal Loans" 
-                value="/personal-loans" 
-                sx={{ 
-                  fontWeight: 600,
-                  textTransform: 'none',
-                  fontSize: { xs: '0.875rem', sm: '1rem' }
+            <Box sx={{ borderBottom: 1, borderColor: 'divider', display: 'flex', justifyContent: 'center' }}>
+              <Tabs 
+                value={value} 
+                onChange={handleChange} 
+                aria-label="loan type tabs"
+                variant="scrollable"
+                scrollButtons="auto"
+                sx={{
+                  '& .MuiTabs-flexContainer': {
+                    justifyContent: 'center'
+                  },
+                  '& .MuiTab-root': { 
+                    minWidth: { xs: 100, sm: 150 },
+                    fontSize: { xs: '0.8rem', sm: '0.9rem' }
+                  },
+                  '& .MuiTabs-indicator': {
+                    height: 3,
+                    bgcolor: 'primary.main'
+                  }
                 }}
-              />
-              <Tab 
-                label="Gold Loans" 
-                value="/gold-loans" 
-                sx={{ 
-                  fontWeight: 600,
-                  textTransform: 'none',
-                  fontSize: { xs: '0.875rem', sm: '1rem' }
-                }}
-              />
-              <Tab 
-                label="Credit Cards" 
-                value="/credit-cards" 
-                sx={{ 
-                  fontWeight: 600,
-                  textTransform: 'none',
-                  fontSize: { xs: '0.875rem', sm: '1rem' }
-                }}
-              />
-            </Tabs>
+              >
+                <Tab 
+                  label="Personal Loans" 
+                  value="/personal-loans" 
+                  sx={{ 
+                    fontWeight: 600,
+                    textTransform: 'none',
+                    fontSize: { xs: '0.875rem', sm: '1rem' }
+                  }}
+                />
+                <Tab 
+                  label="Gold Loans" 
+                  value="/gold-loans" 
+                  sx={{ 
+                    fontWeight: 600,
+                    textTransform: 'none',
+                    fontSize: { xs: '0.875rem', sm: '1rem' }
+                  }}
+                />
+                <Tab 
+                  label="Credit Cards" 
+                  value="/credit-cards" 
+                  sx={{ 
+                    fontWeight: 600,
+                    textTransform: 'none',
+                    fontSize: { xs: '0.875rem', sm: '1rem' }
+                  }}
+                />
+              </Tabs>
+            </Box>
           </Paper>
         </AppBar>
 

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   Box,
   Typography,
@@ -27,24 +27,8 @@ function GoldLoanOutstandings() {
   const navigate = useNavigate();
   const currentDate = new Date();
 
-  useEffect(() => {
-    fetchGoldLoans();
-  }, []);
-
-  const fetchGoldLoans = async () => {
-    try {
-      const response = await axios.get(`${API_URL}/loans`);
-      const goldLoans = response.data.filter(loan => loan.loanType === 'gold');
-      setGoldLoans(goldLoans);
-      calculateMonthlyOutstandings(goldLoans);
-    } catch (error) {
-      console.error('Error fetching gold loans:', error);
-    }
-  };
-
-  const calculateMonthlyOutstandings = (loans) => {
+  const calculateMonthlyOutstandings = useCallback((loans) => {
     const outstandings = {};
-    const currentDate = new Date();
 
     loans.forEach(loan => {
       const startDate = new Date(loan.startDate);
@@ -157,7 +141,6 @@ function GoldLoanOutstandings() {
       }
     });
 
-    // Convert to array and sort by date
     const sortedOutstandings = Object.entries(outstandings)
       .map(([monthKey, data]) => ({
         monthKey,
@@ -169,7 +152,22 @@ function GoldLoanOutstandings() {
       });
 
     setMonthlyOutstandings(sortedOutstandings);
-  };
+  }, []);
+
+  const fetchGoldLoans = useCallback(async () => {
+    try {
+      const response = await axios.get(`${API_URL}/loans`);
+      const goldLoans = response.data.filter(loan => loan.loanType === 'gold');
+      setGoldLoans(goldLoans);
+      calculateMonthlyOutstandings(goldLoans);
+    } catch (error) {
+      console.error('Error fetching gold loans:', error);
+    }
+  }, [calculateMonthlyOutstandings]);
+
+  useEffect(() => {
+    fetchGoldLoans();
+  }, [fetchGoldLoans]);
 
   const formatMonthYear = (month, year) => {
     return new Date(year, month).toLocaleString('default', { month: 'short', year: 'numeric' });

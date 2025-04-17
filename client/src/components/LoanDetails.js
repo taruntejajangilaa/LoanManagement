@@ -266,21 +266,19 @@ function LoanDetails({ loanId, onBack }) {
         return;
       }
 
-      const response = await axios.put(`${API_URL}/loans/${loanId}/prepayment/${editPrepaymentData.id}`, {
+      await axios.put(`${API_URL}/loans/${loanId}/prepayment/${editPrepaymentData.id}`, {
         amount: amount,
         date: editPrepaymentData.date
       });
 
-      if (response.data) {
-        await fetchLoanDetails();
-        setEditPrepaymentDialogOpen(false);
-        setEditPrepaymentData({
-          id: '',
-          amount: '',
-          date: '',
-        });
-        setError(null);
-      }
+      await fetchLoanDetails();
+      setEditPrepaymentDialogOpen(false);
+      setEditPrepaymentData({
+        id: '',
+        amount: '',
+        date: '',
+      });
+      setError(null);
     } catch (error) {
       console.error('Error updating prepayment:', error);
       if (error.response) {
@@ -436,6 +434,11 @@ function LoanDetails({ loanId, onBack }) {
 
   const handleSpentDialogOpen = () => {
     setSpentDialogOpen(true);
+    setSpentData({
+      amount: '',
+      date: new Date().toISOString().split('T')[0],
+      description: ''
+    });
   };
 
   const handleSpentDialogClose = () => {
@@ -443,8 +446,9 @@ function LoanDetails({ loanId, onBack }) {
     setSpentData({
       amount: '',
       date: new Date().toISOString().split('T')[0],
-      description: '',
+      description: ''
     });
+    setError(null);
   };
 
   const handleSpentSubmit = async () => {
@@ -472,7 +476,7 @@ function LoanDetails({ loanId, onBack }) {
         setSpentData({
           amount: '',
           date: new Date().toISOString().split('T')[0],
-          description: '',
+          description: ''
         });
         setError(null);
       }
