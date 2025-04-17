@@ -8,7 +8,8 @@ const app = express();
 app.use(cors({
   origin: [
     'http://localhost:3000',
-    'https://loan-management-frontend.vercel.app'
+    'https://loan-management-frontend.vercel.app',
+    'https://loan-management-fawn.vercel.app'
   ],
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
