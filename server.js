@@ -12,32 +12,42 @@ const allowedOrigins = [
 
 app.use(cors({
   origin: function(origin, callback) {
-    // Allow requests with no origin (like mobile apps or curl requests)
+    // For development - allow requests with no origin
     if (!origin) return callback(null, true);
     
-    // Allow all Vercel preview domains
-    if (origin.match(/https:\/\/loan-management-.*?\.vercel\.app$/)) {
+    // Allow all Vercel preview domains for your project
+    if (origin.match(/https:\/\/loan-management-.*?-tarun-teja-jangilas-projects\.vercel\.app$/)) {
       return callback(null, true);
     }
     
-    // Check if origin is in allowed list
+    // Check against allowed origins
     if (allowedOrigins.indexOf(origin) !== -1) {
       return callback(null, true);
     }
-    
-    callback(new Error('Not allowed by CORS'));
+
+    // Log rejected origins for debugging
+    console.log('Rejected Origin:', origin);
+    callback(null, true); // Temporarily allow all origins while debugging
   },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization']
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  exposedHeaders: ['Access-Control-Allow-Origin']
 }));
+
+// Add error handling middleware before routes
+app.use((req, res, next) => {
+  res.header('Access-Control-Allow-Origin', req.headers.origin);
+  res.header('Access-Control-Allow-Credentials', true);
+  next();
+});
 
 // Middleware
 app.use(express.json());
 
 // Add request logging
 app.use((req, res, next) => {
-  console.log(`${req.method} ${req.path}`);
+  console.log(`${req.method} ${req.path} - Origin: ${req.headers.origin}`);
   next();
 });
 
