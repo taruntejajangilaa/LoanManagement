@@ -6,12 +6,7 @@ const app = express();
 
 // CORS configuration
 app.use(cors({
-  origin: [
-    'http://localhost:3000',
-    'https://loan-management-lswclsjv6-tarun-teja-jangilas-projects.vercel.app',
-    'https://loan-management-frontend.vercel.app',
-    'https://loan-management-flax.vercel.app'
-  ],
+  origin: 'http://localhost:3000',
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
   credentials: true
@@ -27,7 +22,7 @@ app.use((req, res, next) => {
 });
 
 // MongoDB Connection
-mongoose.connect(process.env.MONGODB_URI, {
+mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/loan-management', {
   useNewUrlParser: true,
   useUnifiedTopology: true
 })
@@ -39,7 +34,7 @@ app.use('/api/loans', require('./routes/loans'));
 
 // Health check endpoint
 app.get('/health', (req, res) => {
-  res.json({ status: 'ok', environment: process.env.NODE_ENV });
+  res.json({ status: 'ok', environment: 'development' });
 });
 
 // Error handling middleware
@@ -48,7 +43,7 @@ app.use((err, req, res, next) => {
   res.status(500).json({ message: err.message || 'Something went wrong!' });
 });
 
-const PORT = process.env.PORT || 10000;
+const PORT = 5000;
 app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT} in ${process.env.NODE_ENV} mode`);
+  console.log(`Server running on port ${PORT} in development mode`);
 }); 
