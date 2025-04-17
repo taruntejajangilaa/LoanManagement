@@ -26,12 +26,19 @@ app.use((req, res, next) => {
 });
 
 // MongoDB Connection
-mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/loan-management', {
+const MONGODB_URI = process.env.MONGODB_URI || 'mongodb+srv://taruntejajangila:7euepXMR272vDOJo@loansmanagement.nj7ebmu.mongodb.net/?retryWrites=true&w=majority&appName=LoansManagement';
+
+mongoose.connect(MONGODB_URI, {
   useNewUrlParser: true,
   useUnifiedTopology: true
 })
-.then(() => console.log('Connected to MongoDB'))
-.catch(err => console.error('MongoDB connection error:', err));
+.then(() => {
+  console.log('Successfully connected to MongoDB Atlas');
+})
+.catch(err => {
+  console.error('MongoDB connection error:', err.message);
+  console.error('Connection string used:', MONGODB_URI);
+});
 
 // Routes
 app.use('/api/loans', require('./routes/loans'));
