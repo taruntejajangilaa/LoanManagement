@@ -10,7 +10,8 @@ app.use(cors({
     'http://localhost:3000',
     'https://loan-management-frontend.vercel.app',
     'https://loan-management-fawn.vercel.app',
-    'https://loan-management-hc4a8cwgx-tarun-teja-jangilas-projects.vercel.app'
+    'https://loan-management-hc4a8cwgx-tarun-teja-jangilas-projects.vercel.app',
+    'https://loan-management-jozk60ded-tarun-teja-jangilas-projects.vercel.app'
   ],
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
