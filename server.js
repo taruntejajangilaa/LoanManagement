@@ -5,14 +5,28 @@ const cors = require('cors');
 const app = express();
 
 // Update CORS configuration
+const allowedOrigins = [
+  'http://localhost:3000',
+  'https://loan-management-frontend.vercel.app'
+];
+
 app.use(cors({
-  origin: [
-    'http://localhost:3000',
-    'https://loan-management-frontend.vercel.app',
-    'https://loan-management-fawn.vercel.app',
-    'https://loan-management-hc4a8cwgx-tarun-teja-jangilas-projects.vercel.app',
-    'https://loan-management-jozk60ded-tarun-teja-jangilas-projects.vercel.app'
-  ],
+  origin: function(origin, callback) {
+    // Allow requests with no origin (like mobile apps or curl requests)
+    if (!origin) return callback(null, true);
+    
+    // Allow all Vercel preview domains
+    if (origin.match(/https:\/\/loan-management-.*?\.vercel\.app$/)) {
+      return callback(null, true);
+    }
+    
+    // Check if origin is in allowed list
+    if (allowedOrigins.indexOf(origin) !== -1) {
+      return callback(null, true);
+    }
+    
+    callback(new Error('Not allowed by CORS'));
+  },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization']
