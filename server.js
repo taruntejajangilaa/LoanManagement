@@ -26,9 +26,7 @@ app.use((req, res, next) => {
 });
 
 // MongoDB Connection
-const MONGODB_URI = process.env.MONGODB_URI || 'mongodb+srv://taruntejajangila:7euepXMR272vDOJo@loansmanagement.nj7ebmu.mongodb.net/?retryWrites=true&w=majority&appName=LoansManagement';
-
-mongoose.connect(MONGODB_URI, {
+mongoose.connect(process.env.MONGODB_URI, {
   useNewUrlParser: true,
   useUnifiedTopology: true
 })
@@ -37,7 +35,6 @@ mongoose.connect(MONGODB_URI, {
 })
 .catch(err => {
   console.error('MongoDB connection error:', err.message);
-  console.error('Connection string used:', MONGODB_URI);
 });
 
 // Routes
