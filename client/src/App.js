@@ -175,9 +175,28 @@ function App() {
 
   const handleSubmit = async () => {
     try {
+      // Validate required fields
+      if (!formData.borrowerName || !formData.amount || !formData.startDate) {
+        setSnackbar({
+          open: true,
+          message: 'Please fill in all required fields',
+          severity: 'error'
+        });
+        return;
+      }
+
       let submitData;
 
       if (formData.loanType === 'creditCard') {
+        if (!formData.cardNumber) {
+          setSnackbar({
+            open: true,
+            message: 'Card number is required for credit cards',
+            severity: 'error'
+          });
+          return;
+        }
+
         submitData = {
           borrowerName: formData.borrowerName,
           amount: Number(formData.amount),
@@ -190,6 +209,15 @@ function App() {
           outstanding: Number(formData.amount)
         };
       } else {
+        if (!formData.interestRate) {
+          setSnackbar({
+            open: true,
+            message: 'Interest rate is required',
+            severity: 'error'
+          });
+          return;
+        }
+
         submitData = {
           borrowerName: formData.borrowerName,
           amount: Number(formData.amount),
@@ -201,11 +229,19 @@ function App() {
         };
 
         if (formData.loanType === 'personal') {
+          if (!formData.term) {
+            setSnackbar({
+              open: true,
+              message: 'Term is required for personal loans',
+              severity: 'error'
+            });
+            return;
+          }
           submitData.term = Number(formData.term);
         }
       }
 
-      console.log('Submitting data:', submitData); // For debugging
+      console.log('Submitting data:', submitData);
 
       const response = await axios.post(`${API_URL}/loans`, submitData);
       
@@ -221,9 +257,12 @@ function App() {
       }
     } catch (error) {
       console.error('Error creating loan:', error);
+      const errorMessage = error.response?.data?.message || 
+                          error.response?.data?.error || 
+                          'Error creating loan';
       setSnackbar({
         open: true,
-        message: error.response?.data?.error || 'Error creating loan',
+        message: errorMessage,
         severity: 'error'
       });
     }
