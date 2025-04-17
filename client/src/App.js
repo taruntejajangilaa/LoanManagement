@@ -105,6 +105,7 @@ function App() {
   const [deleteLoan, setDeleteLoan] = useState(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [personalLoans, setPersonalLoans] = useState([]);
+  const [goldLoans, setGoldLoans] = useState([]);
   const [creditCards, setCreditCards] = useState([]);
   const [paymentDialogOpen, setPaymentDialogOpen] = useState(false);
   const [paymentData, setPaymentData] = useState({
@@ -141,9 +142,15 @@ function App() {
       const response = await axios.get(`${API_URL}/loans`);
       setLoans(response.data);
       setPersonalLoans(response.data.filter(loan => !loan.loanType || loan.loanType === 'personal'));
+      setGoldLoans(response.data.filter(loan => loan.loanType === 'gold'));
       setCreditCards(response.data.filter(loan => loan.loanType === 'creditCard'));
     } catch (error) {
       console.error('Error fetching loans:', error);
+      setSnackbar({
+        open: true,
+        message: 'Error fetching loans',
+        severity: 'error'
+      });
     }
   };
 
@@ -360,9 +367,6 @@ function App() {
                 (Math.pow(1 + monthlyRate, term) - 1);
     return Math.round(emi);
   };
-
-  // Filter loans by type
-  const goldLoans = loans.filter(loan => loan.loanType === 'gold');
 
   // Modify Dialog content for different loan types
   const renderDialogContent = () => {
