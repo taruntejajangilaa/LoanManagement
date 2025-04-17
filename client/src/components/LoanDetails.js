@@ -31,10 +31,12 @@ import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import axios from 'axios';
 import { format } from 'date-fns';
+import { useParams } from 'react-router-dom';
 
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
 
-function LoanDetails({ loanId, onBack }) {
+function LoanDetails({ onBack }) {
+  const { id } = useParams(); // Get the loan ID from URL params
   const [loan, setLoan] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -78,21 +80,29 @@ function LoanDetails({ loanId, onBack }) {
   const fetchLoanDetails = useCallback(async () => {
     try {
       setLoading(true);
-      const response = await axios.get(`${API_URL}/loans/${loanId}`);
+      console.log('Fetching loan details for ID:', id);
+      console.log('Using API URL:', API_URL);
+      
+      const response = await axios.get(`${API_URL}/loans/${id}`);
+      console.log('Loan details response:', response.data);
+      
       setLoan(response.data);
       calculateEMIBreakdown(response.data);
       setError(null);
     } catch (error) {
       console.error('Error fetching loan details:', error);
-      setError('Failed to load loan details');
+      console.error('Error response:', error.response);
+      setError(error.response?.data?.message || 'Failed to load loan details');
     } finally {
       setLoading(false);
     }
-  }, [loanId]);
+  }, [id]);
 
   useEffect(() => {
-    fetchLoanDetails();
-  }, [fetchLoanDetails]);
+    if (id) {
+      fetchLoanDetails();
+    }
+  }, [fetchLoanDetails, id]);
 
   const calculateEMIBreakdown = (loanData) => {
     if (!loanData) return;
@@ -211,7 +221,7 @@ function LoanDetails({ loanId, onBack }) {
         return;
       }
 
-      const response = await axios.post(`${API_URL}/loans/${loanId}/prepayment`, {
+      const response = await axios.post(`${API_URL}/loans/${id}/prepayment`, {
         amount: amount,
         date: prepaymentData.date
       });
@@ -266,7 +276,7 @@ function LoanDetails({ loanId, onBack }) {
         return;
       }
 
-      await axios.put(`${API_URL}/loans/${loanId}/prepayment/${editPrepaymentData.id}`, {
+      await axios.put(`${API_URL}/loans/${id}/prepayment/${editPrepaymentData.id}`, {
         amount: amount,
         date: editPrepaymentData.date
       });
@@ -291,7 +301,7 @@ function LoanDetails({ loanId, onBack }) {
 
   const handleDeletePrepayment = async (prepaymentId) => {
     try {
-      await axios.delete(`${API_URL}/loans/${loanId}/prepayment/${prepaymentId}`);
+      await axios.delete(`${API_URL}/loans/${id}/prepayment/${prepaymentId}`);
       await fetchLoanDetails();
       setError(null);
     } catch (error) {
@@ -408,7 +418,7 @@ function LoanDetails({ loanId, onBack }) {
         return;
       }
 
-      const response = await axios.post(`${API_URL}/loans/${loanId}/payment`, {
+      const response = await axios.post(`${API_URL}/loans/${id}/payment`, {
         amount: amount,
         date: paymentData.date
       });
@@ -464,7 +474,7 @@ function LoanDetails({ loanId, onBack }) {
         return;
       }
 
-      const response = await axios.post(`${API_URL}/loans/${loanId}/spent`, {
+      const response = await axios.post(`${API_URL}/loans/${id}/spent`, {
         amount: amount,
         date: spentData.date,
         description: spentData.description
@@ -525,7 +535,7 @@ function LoanDetails({ loanId, onBack }) {
         return;
       }
 
-      const response = await axios.put(`${API_URL}/loans/${loanId}/payment/${editPaymentData.id}`, {
+      const response = await axios.put(`${API_URL}/loans/${id}/payment/${editPaymentData.id}`, {
         amount: amount,
         date: editPaymentData.date
       });
@@ -552,7 +562,7 @@ function LoanDetails({ loanId, onBack }) {
 
   const handleDeletePayment = async (paymentId) => {
     try {
-      await axios.delete(`${API_URL}/loans/${loanId}/payment/${paymentId}`);
+      await axios.delete(`${API_URL}/loans/${id}/payment/${paymentId}`);
       await fetchLoanDetails();
       setError(null);
     } catch (error) {
@@ -602,7 +612,7 @@ function LoanDetails({ loanId, onBack }) {
         return;
       }
 
-      const response = await axios.put(`${API_URL}/loans/${loanId}/spent/${editSpentData.id}`, {
+      const response = await axios.put(`${API_URL}/loans/${id}/spent/${editSpentData.id}`, {
         amount: amount,
         date: editSpentData.date,
         description: editSpentData.description
@@ -631,7 +641,7 @@ function LoanDetails({ loanId, onBack }) {
 
   const handleDeleteSpent = async (spentId) => {
     try {
-      await axios.delete(`${API_URL}/loans/${loanId}/spent/${spentId}`);
+      await axios.delete(`${API_URL}/loans/${id}/spent/${spentId}`);
       await fetchLoanDetails();
       setError(null);
     } catch (error) {
