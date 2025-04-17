@@ -35,7 +35,8 @@ import { Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-
 import PersonalLoanOutstandings from './components/PersonalLoanOutstandings';
 import GoldLoanOutstandings from './components/GoldLoanOutstandings';
 
-const API_URL = 'http://localhost:5000/api';
+// Update API URL to use environment variables
+const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
 
 const theme = createTheme({
   palette: {
