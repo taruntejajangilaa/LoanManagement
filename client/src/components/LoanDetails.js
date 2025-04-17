@@ -80,18 +80,14 @@ function LoanDetails({ onBack }) {
   const fetchLoanDetails = useCallback(async () => {
     try {
       setLoading(true);
-      console.log('Fetching loan details for ID:', id);
-      console.log('Using API URL:', API_URL);
-      
       const response = await axios.get(`${API_URL}/loans/${id}`);
-      console.log('Loan details response:', response.data);
-      
       setLoan(response.data);
-      calculateEMIBreakdown(response.data);
+      if (response.data.loanType === 'personal') {
+        calculateEMIBreakdown(response.data);
+      }
       setError(null);
     } catch (error) {
       console.error('Error fetching loan details:', error);
-      console.error('Error response:', error.response);
       setError(error.response?.data?.message || 'Failed to load loan details');
     } finally {
       setLoading(false);
@@ -1505,7 +1501,7 @@ function LoanDetails({ onBack }) {
 
   if (loading) {
     return (
-      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '400px' }}>
+      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '200px' }}>
         <CircularProgress />
       </Box>
     );
@@ -1513,18 +1509,25 @@ function LoanDetails({ onBack }) {
 
   if (error) {
     return (
-      <Box sx={{ p: 3, textAlign: 'center' }}>
-        <Typography color="error" gutterBottom>
-          {error}
-        </Typography>
-        <Button onClick={onBack} startIcon={<ArrowBackIcon />}>
-          Back to Loans
+      <Box>
+        <Button startIcon={<ArrowBackIcon />} onClick={onBack} sx={{ mb: 2 }}>
+          Back to List
         </Button>
+        <Typography color="error">{error}</Typography>
       </Box>
     );
   }
 
-  if (!loan) return null;
+  if (!loan) {
+    return (
+      <Box>
+        <Button startIcon={<ArrowBackIcon />} onClick={onBack} sx={{ mb: 2 }}>
+          Back to List
+        </Button>
+        <Typography>Loan not found</Typography>
+      </Box>
+    );
+  }
 
   const getStatusColor = (status) => {
     switch (status) {

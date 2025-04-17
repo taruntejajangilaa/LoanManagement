@@ -269,7 +269,7 @@ function App() {
   };
 
   const handleViewDetails = (loanId) => {
-    setSelectedLoan(loanId);
+    navigate(`/loans/${loanId}`);
   };
 
   const handleBackToList = () => {

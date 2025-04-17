@@ -11,28 +11,15 @@ const allowedOrigins = [
 ];
 
 app.use(cors({
-  origin: function(origin, callback) {
-    // For development - allow requests with no origin
-    if (!origin) return callback(null, true);
-    
-    // Allow all Vercel preview domains for your project
-    if (origin.match(/https:\/\/loan-management-.*?-tarun-teja-jangilas-projects\.vercel\.app$/)) {
-      return callback(null, true);
-    }
-    
-    // Check against allowed origins
-    if (allowedOrigins.indexOf(origin) !== -1) {
-      return callback(null, true);
-    }
-
-    // Log rejected origins for debugging
-    console.log('Rejected Origin:', origin);
-    callback(null, true); // Temporarily allow all origins while debugging
-  },
+  origin: [
+    'http://localhost:3000',
+    'https://loan-management-frontend.vercel.app',
+    'https://loan-management-fawn.vercel.app',
+    'https://loan-management-hj0x93tkc-tarun-teja-jangilas-projects.vercel.app'
+  ],
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
-  exposedHeaders: ['Access-Control-Allow-Origin']
+  allowedHeaders: ['Content-Type', 'Authorization']
 }));
 
 // Add error handling middleware before routes
