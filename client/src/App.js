@@ -22,7 +22,8 @@ import {
   DialogContentText,
   Tabs,
   Tab,
-  CircularProgress
+  CircularProgress,
+  Container
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import VisibilityIcon from '@mui/icons-material/Visibility';
@@ -36,6 +37,7 @@ import PersonalLoanOutstandings from './components/PersonalLoanOutstandings';
 import GoldLoanOutstandings from './components/GoldLoanOutstandings';
 import ErrorBoundary from './components/ErrorBoundary';
 import { loans } from './utils/api';
+import { makeStyles } from '@mui/styles';
 
 const theme = createTheme({
   palette: {
@@ -67,7 +69,113 @@ const theme = createTheme({
   },
 });
 
+const useStyles = makeStyles((theme) => ({
+  root: {
+    flexGrow: 1,
+    backgroundColor: theme.palette.background.default,
+    minHeight: '100vh',
+  },
+  appBar: {
+    backgroundColor: '#1976d2',
+  },
+  toolbar: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    [theme.breakpoints.down('sm')]: {
+      flexDirection: 'column',
+      padding: theme.spacing(1),
+    },
+  },
+  title: {
+    flexGrow: 1,
+    textAlign: 'center',
+    [theme.breakpoints.down('sm')]: {
+      fontSize: '1.5rem',
+      marginBottom: theme.spacing(1),
+    },
+  },
+  tabContainer: {
+    [theme.breakpoints.down('sm')]: {
+      width: '100%',
+    },
+  },
+  tab: {
+    [theme.breakpoints.down('sm')]: {
+      minWidth: 'auto',
+      padding: theme.spacing(1),
+      fontSize: '0.8rem',
+    },
+  },
+  addButton: {
+    marginLeft: theme.spacing(2),
+    [theme.breakpoints.down('sm')]: {
+      marginLeft: 0,
+      marginTop: theme.spacing(1),
+      padding: theme.spacing(1),
+      fontSize: '0.8rem',
+    },
+  },
+  card: {
+    marginBottom: theme.spacing(2),
+    [theme.breakpoints.down('sm')]: {
+      margin: theme.spacing(1),
+    },
+  },
+  cardContent: {
+    [theme.breakpoints.down('sm')]: {
+      padding: theme.spacing(1),
+    },
+  },
+  cardActions: {
+    [theme.breakpoints.down('sm')]: {
+      padding: theme.spacing(1),
+      '& button': {
+        padding: theme.spacing(0.5),
+        fontSize: '0.75rem',
+        minWidth: 'auto',
+      },
+    },
+  },
+  dialogContent: {
+    [theme.breakpoints.down('sm')]: {
+      padding: theme.spacing(1),
+    },
+  },
+  dialogActions: {
+    [theme.breakpoints.down('sm')]: {
+      padding: theme.spacing(1),
+      '& button': {
+        padding: theme.spacing(0.5),
+        fontSize: '0.75rem',
+        minWidth: 'auto',
+      },
+    },
+  },
+  formControl: {
+    marginBottom: theme.spacing(2),
+    [theme.breakpoints.down('sm')]: {
+      marginBottom: theme.spacing(1),
+    },
+  },
+  textField: {
+    [theme.breakpoints.down('sm')]: {
+      '& .MuiInputBase-root': {
+        fontSize: '0.875rem',
+      },
+    },
+  },
+  button: {
+    [theme.breakpoints.down('sm')]: {
+      padding: theme.spacing(0.5),
+      fontSize: '0.75rem',
+      minWidth: 'auto',
+    },
+  },
+}));
+
 function App() {
+  const classes = useStyles();
   const [allLoans, setAllLoans] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -121,7 +229,7 @@ function App() {
   });
   const navigate = useNavigate();
   const location = useLocation();
-  const [value, setValue] = useState('/personal-loans');
+  const [value, setValue] = useState(0);
 
   useEffect(() => {
     fetchLoans();
@@ -130,11 +238,11 @@ function App() {
   useEffect(() => {
     const path = location.pathname;
     if (path.includes('/personal-loans')) {
-      setValue('/personal-loans');
+      setValue(0);
     } else if (path.includes('/gold-loans')) {
-      setValue('/gold-loans');
+      setValue(1);
     } else if (path.includes('/credit-cards')) {
-      setValue('/credit-cards');
+      setValue(2);
     }
   }, [location.pathname]);
 
@@ -1308,116 +1416,36 @@ function App() {
   return (
     <ThemeProvider theme={theme}>
       <ErrorBoundary onRetry={fetchLoans}>
-        <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
-          <AppBar 
-            position="static" 
-            elevation={0} 
-            sx={{ 
-              bgcolor: 'white',
-              color: 'text.primary',
-              borderBottom: '1px solid',
-              borderColor: 'divider',
-              py: { xs: 0.5, sm: 1 }
-            }}
-          >
-            <Toolbar sx={{ 
-              maxWidth: 'lg', 
-              width: '100%', 
-              mx: 'auto',
-              px: { xs: 1, sm: 2, md: 3 }
-            }}>
-              <Box sx={{ 
-                display: 'flex', 
-                alignItems: 'center',
-                gap: { xs: 1, sm: 2 },
-                flexGrow: 1 
-              }}>
-                <Box sx={{ 
-                  bgcolor: 'primary.main',
-                  color: 'white',
-                  p: { xs: 1, sm: 1.5 },
-                  borderRadius: 2,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  width: { xs: 36, sm: 48 },
-                  height: { xs: 36, sm: 48 }
-                }}>
-                  <Typography variant="h6" sx={{ fontWeight: 600, fontSize: { xs: '1rem', sm: '1.25rem' } }}>
-                    T
-                  </Typography>
-                </Box>
-                <Box>
-                  <Typography variant="h5" sx={{ 
-                    fontWeight: 700,
-                    background: 'linear-gradient(45deg, #2563eb 30%, #3b82f6 90%)',
-                    WebkitBackgroundClip: 'text',
-                    WebkitTextFillColor: 'transparent',
-                    fontSize: { xs: '1.25rem', sm: '1.5rem', md: '1.75rem' }
-                  }}>
-                    Tarun Personal Debt Management
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary" sx={{ display: { xs: 'none', sm: 'block' } }}>
-                    Track and manage your loans efficiently
-                  </Typography>
-                </Box>
-              </Box>
+        <div className={classes.root}>
+          <AppBar position="static" className={classes.appBar}>
+            <Toolbar className={classes.toolbar}>
+              <Typography variant="h6" className={classes.title}>
+                Loan Management System
+              </Typography>
+              <Button
+                variant="contained"
+                color="primary"
+                onClick={handleOpen}
+                className={classes.addButton}
+              >
+                Add New Loan
+              </Button>
             </Toolbar>
-            <Paper elevation={0} sx={{ borderBottom: 1, borderColor: 'divider' }}>
-              <Box sx={{ borderBottom: 1, borderColor: 'divider', display: 'flex', justifyContent: 'center' }}>
-                <Tabs 
-                  value={value} 
-                  onChange={handleChange} 
-                  aria-label="loan type tabs"
-                  variant="scrollable"
-                  scrollButtons="auto"
-                  sx={{
-                    '& .MuiTabs-flexContainer': {
-                      justifyContent: 'center'
-                    },
-                    '& .MuiTab-root': { 
-                      minWidth: { xs: 100, sm: 150 },
-                      fontSize: { xs: '0.8rem', sm: '0.9rem' }
-                    },
-                    '& .MuiTabs-indicator': {
-                      height: 3,
-                      bgcolor: 'primary.main'
-                    }
-                  }}
-                >
-                  <Tab 
-                    label="Personal Loans" 
-                    value="/personal-loans" 
-                    sx={{ 
-                      fontWeight: 600,
-                      textTransform: 'none',
-                      fontSize: { xs: '0.875rem', sm: '1rem' }
-                    }}
-                  />
-                  <Tab 
-                    label="Gold Loans" 
-                    value="/gold-loans" 
-                    sx={{ 
-                      fontWeight: 600,
-                      textTransform: 'none',
-                      fontSize: { xs: '0.875rem', sm: '1rem' }
-                    }}
-                  />
-                  <Tab 
-                    label="Credit Cards" 
-                    value="/credit-cards" 
-                    sx={{ 
-                      fontWeight: 600,
-                      textTransform: 'none',
-                      fontSize: { xs: '0.875rem', sm: '1rem' }
-                    }}
-                  />
-                </Tabs>
-              </Box>
-            </Paper>
+            <Tabs
+              value={value}
+              onChange={handleChange}
+              indicatorColor="primary"
+              textColor="primary"
+              variant="fullWidth"
+              className={classes.tabContainer}
+            >
+              <Tab label="Personal Loans" className={classes.tab} />
+              <Tab label="Gold Loans" className={classes.tab} />
+              <Tab label="Credit Cards" className={classes.tab} />
+            </Tabs>
           </AppBar>
 
-          <Box sx={{ flex: 1, bgcolor: '#f8fafc', p: { xs: 1, sm: 2, md: 3 } }}>
+          <Container>
             <Routes>
               <Route path="/" element={<Navigate to="/personal-loans" replace />} />
               <Route path="/personal-loans" element={renderPersonalLoans()} />
@@ -1427,23 +1455,21 @@ function App() {
               <Route path="/credit-cards" element={renderCreditCards()} />
               <Route path="/loans/:id" element={<LoanDetails onBack={() => navigate(-1)} />} />
             </Routes>
-          </Box>
+          </Container>
 
           <Dialog open={open} onClose={handleClose} maxWidth="sm" fullWidth>
-            <DialogTitle>
-              Add New {formData.loanType === 'creditCard' ? 'Credit Card' : 
-                       formData.loanType === 'gold' ? 'Gold Loan' : 'Personal Loan'}
-            </DialogTitle>
-            <DialogContent>
+            <DialogTitle>Add New Loan</DialogTitle>
+            <DialogContent className={classes.dialogContent}>
               <Box component="form" sx={{ mt: 2 }}>
                 {renderDialogContent()}
               </Box>
             </DialogContent>
-            <DialogActions>
-              <Button onClick={handleClose}>Cancel</Button>
-              <Button onClick={handleSubmit} variant="contained">
-                Add {formData.loanType === 'creditCard' ? 'Credit Card' : 
-                     formData.loanType === 'gold' ? 'Gold Loan' : 'Personal Loan'}
+            <DialogActions className={classes.dialogActions}>
+              <Button onClick={handleClose} color="primary" className={classes.button}>
+                Cancel
+              </Button>
+              <Button onClick={handleSubmit} color="primary" className={classes.button}>
+                Submit
               </Button>
             </DialogActions>
           </Dialog>
@@ -1710,7 +1736,7 @@ function App() {
               {snackbar.message}
             </Alert>
           </Snackbar>
-        </Box>
+        </div>
       </ErrorBoundary>
     </ThemeProvider>
   );
