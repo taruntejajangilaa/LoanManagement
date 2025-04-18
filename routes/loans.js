@@ -57,11 +57,24 @@ router.get('/', async (req, res) => {
 // Create new loan
 router.post('/', async (req, res) => {
   try {
-    console.log('Received loan creation request:', req.body);
+    console.log('Received loan creation request:', {
+      body: req.body,
+      headers: req.headers,
+      method: req.method,
+      path: req.path
+    });
     
     // Validate required fields
     const { borrowerName, amount, startDate, loanType } = req.body;
+    console.log('Extracted fields:', { borrowerName, amount, startDate, loanType });
+    
     if (!borrowerName || !amount || !startDate || !loanType) {
+      console.log('Missing required fields:', {
+        borrowerName: !borrowerName,
+        amount: !amount,
+        startDate: !startDate,
+        loanType: !loanType
+      });
       return res.status(400).json({ 
         message: 'Missing required fields',
         required: ['borrowerName', 'amount', 'startDate', 'loanType'],
@@ -71,6 +84,7 @@ router.post('/', async (req, res) => {
 
     // Validate loan type specific fields
     if (loanType === 'personal' && !req.body.term) {
+      console.log('Missing term for personal loan');
       return res.status(400).json({ 
         message: 'Term is required for personal loans',
         received: req.body 
@@ -78,18 +92,27 @@ router.post('/', async (req, res) => {
     }
 
     if (loanType === 'creditCard' && !req.body.cardNumber) {
+      console.log('Missing card number for credit card');
       return res.status(400).json({ 
         message: 'Card number is required for credit cards',
         received: req.body 
       });
     }
 
+    console.log('Creating new loan with data:', req.body);
     const loan = new Loan(req.body);
+    console.log('Loan model instance created:', loan);
+    
     const newLoan = await loan.save();
-    console.log('Loan created successfully:', newLoan);
+    console.log('Loan saved successfully:', newLoan);
     res.status(201).json(newLoan);
   } catch (error) {
-    console.error('Error creating loan:', error);
+    console.error('Error creating loan:', {
+      error: error.message,
+      stack: error.stack,
+      name: error.name,
+      code: error.code
+    });
     res.status(400).json({ 
       message: error.message,
       details: error.errors || {},

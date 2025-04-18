@@ -191,7 +191,13 @@ function App() {
   const handleSubmit = async () => {
     try {
       // Validate required fields
+      console.log('Starting loan creation with data:', formData);
       if (!formData.borrowerName || !formData.amount || !formData.startDate) {
+        console.log('Missing required fields:', {
+          borrowerName: !formData.borrowerName,
+          amount: !formData.amount,
+          startDate: !formData.startDate
+        });
         setSnackbar({
           open: true,
           message: 'Please fill in all required fields',
@@ -225,6 +231,7 @@ function App() {
         };
       } else {
         if (!formData.interestRate) {
+          console.log('Missing interest rate');
           setSnackbar({
             open: true,
             message: 'Interest rate is required',
@@ -245,6 +252,7 @@ function App() {
 
         if (formData.loanType === 'personal') {
           if (!formData.term) {
+            console.log('Missing term for personal loan');
             setSnackbar({
               open: true,
               message: 'Term is required for personal loans',
@@ -256,9 +264,11 @@ function App() {
         }
       }
 
-      console.log('Submitting data:', submitData);
+      console.log('Submitting loan data to API:', submitData);
+      console.log('API URL:', `${API_URL}/loans`);
 
       const response = await axios.post(`${API_URL}/loans`, submitData);
+      console.log('API Response:', response.data);
       
       if (response.data) {
         setSnackbar({
@@ -272,6 +282,11 @@ function App() {
       }
     } catch (error) {
       console.error('Error creating loan:', error);
+      console.error('Error details:', {
+        message: error.message,
+        response: error.response?.data,
+        status: error.response?.status
+      });
       const errorMessage = error.response?.data?.message || 
                           error.response?.data?.error || 
                           'Error creating loan';
