@@ -464,10 +464,12 @@ function App() {
     setEditLoanData({
       borrowerName: loan.borrowerName,
       amount: loan.amount.toString(),
-      interestRate: loan.interestRate.toString(),
+      interestRate: loan.interestRate?.toString() || '0',
       term: loan.term?.toString() || '',
       startDate: new Date(loan.startDate).toISOString().split('T')[0],
       loanType: loan.loanType || 'personal',
+      cardNumber: loan.cardNumber || '',
+      creditLimit: loan.creditLimit?.toString() || '',
       _id: loan._id
     });
     setEditDialogOpen(true);
@@ -481,6 +483,9 @@ function App() {
       interestRate: '',
       term: '',
       startDate: '',
+      loanType: '',
+      cardNumber: '',
+      creditLimit: '',
       _id: null
     });
   };
@@ -488,12 +493,72 @@ function App() {
   const handleEditSubmit = async (e) => {
     e.preventDefault();
     try {
-      await loans.update(editLoanData._id, editLoanData);
-      fetchLoans();
+      // Validate required fields
+      if (!editLoanData.borrowerName || !editLoanData.amount || !editLoanData.startDate) {
+        setSnackbar({
+          open: true,
+          message: 'Please fill in all required fields',
+          severity: 'error'
+        });
+        return;
+      }
+
+      let submitData = {
+        borrowerName: editLoanData.borrowerName,
+        amount: Number(editLoanData.amount),
+        startDate: editLoanData.startDate,
+        loanType: editLoanData.loanType
+      };
+
+      if (editLoanData.loanType === 'creditCard') {
+        if (!editLoanData.cardNumber) {
+          setSnackbar({
+            open: true,
+            message: 'Card number is required for credit cards',
+            severity: 'error'
+          });
+          return;
+        }
+        submitData = {
+          ...submitData,
+          cardNumber: editLoanData.cardNumber,
+          creditLimit: Number(editLoanData.creditLimit || editLoanData.amount),
+          interestRate: 0
+        };
+      } else {
+        if (!editLoanData.interestRate) {
+          setSnackbar({
+            open: true,
+            message: 'Interest rate is required',
+            severity: 'error'
+          });
+          return;
+        }
+        submitData = {
+          ...submitData,
+          interestRate: Number(editLoanData.interestRate)
+        };
+
+        if (editLoanData.loanType === 'personal') {
+          if (!editLoanData.term) {
+            setSnackbar({
+              open: true,
+              message: 'Term is required for personal loans',
+              severity: 'error'
+            });
+            return;
+          }
+          submitData.term = Number(editLoanData.term);
+        }
+      }
+
+      await loans.update(editLoanData._id, submitData);
+      await fetchLoans();
       handleEditClose();
       setSnackbar({
         open: true,
-        message: 'Loan updated successfully',
+        message: `${editLoanData.loanType === 'creditCard' ? 'Credit Card' : 
+                 editLoanData.loanType === 'gold' ? 'Gold Loan' : 'Personal Loan'} updated successfully`,
         severity: 'success'
       });
     } catch (error) {
@@ -1428,50 +1493,78 @@ function App() {
 
           <Dialog open={editDialogOpen} onClose={handleEditClose} maxWidth="sm" fullWidth>
             <DialogTitle>
-              Edit {editLoanData.loanType === 'gold' ? 'Gold' : 'Personal'} Loan
+              Edit {editLoanData.loanType === 'creditCard' ? 'Credit Card' : 
+                    editLoanData.loanType === 'gold' ? 'Gold Loan' : 'Personal Loan'}
             </DialogTitle>
             <DialogContent>
               <Box component="form" sx={{ mt: 2 }}>
                 <TextField
                   fullWidth
-                  label="Borrower Name"
+                  label={editLoanData.loanType === 'creditCard' ? "Credit Card Name" : "Borrower Name"}
                   name="borrowerName"
                   value={editLoanData.borrowerName}
                   onChange={(e) => setEditLoanData({ ...editLoanData, borrowerName: e.target.value })}
                   margin="normal"
                   required
                 />
-                <TextField
-                  fullWidth
-                  label="Loan Amount"
-                  name="amount"
-                  type="number"
-                  value={editLoanData.amount}
-                  onChange={(e) => setEditLoanData({ ...editLoanData, amount: e.target.value })}
-                  margin="normal"
-                  required
-                />
-                <TextField
-                  fullWidth
-                  label="Interest Rate (%)"
-                  name="interestRate"
-                  type="number"
-                  value={editLoanData.interestRate}
-                  onChange={(e) => setEditLoanData({ ...editLoanData, interestRate: e.target.value })}
-                  margin="normal"
-                  required
-                />
-                {editLoanData.loanType === 'personal' && (
-                  <TextField
-                    fullWidth
-                    label="Term (months)"
-                    name="term"
-                    type="number"
-                    value={editLoanData.term}
-                    onChange={(e) => setEditLoanData({ ...editLoanData, term: e.target.value })}
-                    margin="normal"
-                    required
-                  />
+                {editLoanData.loanType === 'creditCard' ? (
+                  <>
+                    <TextField
+                      fullWidth
+                      label="Credit Limit"
+                      name="amount"
+                      type="number"
+                      value={editLoanData.amount}
+                      onChange={(e) => setEditLoanData({ ...editLoanData, amount: e.target.value, creditLimit: e.target.value })}
+                      margin="normal"
+                      required
+                    />
+                    <TextField
+                      fullWidth
+                      label="Card Number"
+                      name="cardNumber"
+                      value={editLoanData.cardNumber}
+                      onChange={(e) => setEditLoanData({ ...editLoanData, cardNumber: e.target.value })}
+                      margin="normal"
+                      required
+                      inputProps={{ maxLength: 16 }}
+                    />
+                  </>
+                ) : (
+                  <>
+                    <TextField
+                      fullWidth
+                      label="Loan Amount"
+                      name="amount"
+                      type="number"
+                      value={editLoanData.amount}
+                      onChange={(e) => setEditLoanData({ ...editLoanData, amount: e.target.value })}
+                      margin="normal"
+                      required
+                    />
+                    <TextField
+                      fullWidth
+                      label="Interest Rate (%)"
+                      name="interestRate"
+                      type="number"
+                      value={editLoanData.interestRate}
+                      onChange={(e) => setEditLoanData({ ...editLoanData, interestRate: e.target.value })}
+                      margin="normal"
+                      required
+                    />
+                    {editLoanData.loanType === 'personal' && (
+                      <TextField
+                        fullWidth
+                        label="Term (months)"
+                        name="term"
+                        type="number"
+                        value={editLoanData.term}
+                        onChange={(e) => setEditLoanData({ ...editLoanData, term: e.target.value })}
+                        margin="normal"
+                        required
+                      />
+                    )}
+                  </>
                 )}
                 <TextField
                   fullWidth
