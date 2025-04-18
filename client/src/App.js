@@ -37,9 +37,6 @@ import GoldLoanOutstandings from './components/GoldLoanOutstandings';
 import ErrorBoundary from './components/ErrorBoundary';
 import { loans } from './utils/api';
 
-// Update API URL to use environment variables
-const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
-
 const theme = createTheme({
   palette: {
     primary: {
