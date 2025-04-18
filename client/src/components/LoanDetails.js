@@ -29,11 +29,9 @@ import ScheduleIcon from '@mui/icons-material/Schedule';
 import PaymentIcon from '@mui/icons-material/Payment';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
-import axios from 'axios';
+import { loans } from '../utils/api';
 import { format } from 'date-fns';
 import { useParams } from 'react-router-dom';
-
-const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
 
 function LoanDetails({ onBack }) {
   const { id } = useParams(); // Get the loan ID from URL params
@@ -80,7 +78,7 @@ function LoanDetails({ onBack }) {
   const fetchLoanDetails = useCallback(async () => {
     try {
       setLoading(true);
-      const response = await axios.get(`${API_URL}/loans/${id}`);
+      const response = await loans.getById(id);
       setLoan(response.data);
       if (response.data.loanType === 'personal') {
         calculateEMIBreakdown(response.data);
@@ -88,7 +86,7 @@ function LoanDetails({ onBack }) {
       setError(null);
     } catch (error) {
       console.error('Error fetching loan details:', error);
-      setError(error.response?.data?.message || 'Failed to load loan details');
+      setError(error.message);
     } finally {
       setLoading(false);
     }
@@ -217,27 +215,21 @@ function LoanDetails({ onBack }) {
         return;
       }
 
-      const response = await axios.post(`${API_URL}/loans/${id}/prepayment`, {
+      await loans.addPrepayment(id, {
         amount: amount,
         date: prepaymentData.date
       });
 
-      if (response.data) {
-        await fetchLoanDetails();
-        setPrepaymentDialogOpen(false);
-        setPrepaymentData({
-          amount: '',
-          date: new Date().toISOString().split('T')[0],
-        });
-        setError(null);
-      }
+      await fetchLoanDetails();
+      setPrepaymentDialogOpen(false);
+      setPrepaymentData({
+        amount: '',
+        date: new Date().toISOString().split('T')[0],
+      });
+      setError(null);
     } catch (error) {
       console.error('Error processing prepayment:', error);
-      if (error.response) {
-        setError(error.response.data.message || 'Failed to process prepayment');
-      } else {
-        setError('Failed to connect to server');
-      }
+      setError(error.message);
     }
   };
 
@@ -272,7 +264,7 @@ function LoanDetails({ onBack }) {
         return;
       }
 
-      await axios.put(`${API_URL}/loans/${id}/prepayment/${editPrepaymentData.id}`, {
+      await loans.updatePrepayment(id, editPrepaymentData.id, {
         amount: amount,
         date: editPrepaymentData.date
       });
@@ -287,26 +279,18 @@ function LoanDetails({ onBack }) {
       setError(null);
     } catch (error) {
       console.error('Error updating prepayment:', error);
-      if (error.response) {
-        setError(error.response.data.message || 'Failed to update prepayment');
-      } else {
-        setError('Failed to connect to server');
-      }
+      setError(error.message);
     }
   };
 
   const handleDeletePrepayment = async (prepaymentId) => {
     try {
-      await axios.delete(`${API_URL}/loans/${id}/prepayment/${prepaymentId}`);
+      await loans.deletePrepayment(id, prepaymentId);
       await fetchLoanDetails();
       setError(null);
     } catch (error) {
       console.error('Error deleting prepayment:', error);
-      if (error.response) {
-        setError(error.response.data.message || 'Failed to delete prepayment');
-      } else {
-        setError('Failed to connect to server');
-      }
+      setError(error.message);
     }
   };
 
@@ -414,27 +398,21 @@ function LoanDetails({ onBack }) {
         return;
       }
 
-      const response = await axios.post(`${API_URL}/loans/${id}/payment`, {
+      await loans.addPayment(id, {
         amount: amount,
         date: paymentData.date
       });
 
-      if (response.data) {
-        await fetchLoanDetails();
-        setPaymentDialogOpen(false);
-        setPaymentData({
-          amount: '',
-          date: new Date().toISOString().split('T')[0],
-        });
-        setError(null);
-      }
+      await fetchLoanDetails();
+      setPaymentDialogOpen(false);
+      setPaymentData({
+        amount: '',
+        date: new Date().toISOString().split('T')[0],
+      });
+      setError(null);
     } catch (error) {
       console.error('Error processing payment:', error);
-      if (error.response) {
-        setError(error.response.data.message || 'Failed to process payment');
-      } else {
-        setError('Failed to connect to server');
-      }
+      setError(error.message);
     }
   };
 
@@ -470,29 +448,23 @@ function LoanDetails({ onBack }) {
         return;
       }
 
-      const response = await axios.post(`${API_URL}/loans/${id}/spent`, {
+      await loans.addSpent(id, {
         amount: amount,
         date: spentData.date,
         description: spentData.description
       });
 
-      if (response.data) {
-        await fetchLoanDetails();
-        setSpentDialogOpen(false);
-        setSpentData({
-          amount: '',
-          date: new Date().toISOString().split('T')[0],
-          description: ''
-        });
-        setError(null);
-      }
+      await fetchLoanDetails();
+      setSpentDialogOpen(false);
+      setSpentData({
+        amount: '',
+        date: new Date().toISOString().split('T')[0],
+        description: ''
+      });
+      setError(null);
     } catch (error) {
-      console.error('Error processing spent:', error);
-      if (error.response) {
-        setError(error.response.data.message || 'Failed to process spent amount');
-      } else {
-        setError('Failed to connect to server');
-      }
+      console.error('Error adding spent:', error);
+      setError(error.message);
     }
   };
 
@@ -531,7 +503,7 @@ function LoanDetails({ onBack }) {
         return;
       }
 
-      const response = await axios.put(`${API_URL}/loans/${id}/payment/${editPaymentData.id}`, {
+      const response = await loans.updatePayment(id, editPaymentData.id, {
         amount: amount,
         date: editPaymentData.date
       });
@@ -548,26 +520,18 @@ function LoanDetails({ onBack }) {
       }
     } catch (error) {
       console.error('Error updating payment:', error);
-      if (error.response) {
-        setError(error.response.data.message || 'Failed to update payment');
-      } else {
-        setError('Failed to connect to server');
-      }
+      setError(error.message);
     }
   };
 
   const handleDeletePayment = async (paymentId) => {
     try {
-      await axios.delete(`${API_URL}/loans/${id}/payment/${paymentId}`);
+      await loans.deletePayment(id, paymentId);
       await fetchLoanDetails();
       setError(null);
     } catch (error) {
       console.error('Error deleting payment:', error);
-      if (error.response) {
-        setError(error.response.data.message || 'Failed to delete payment');
-      } else {
-        setError('Failed to connect to server');
-      }
+      setError(error.message);
     }
   };
 
@@ -608,7 +572,7 @@ function LoanDetails({ onBack }) {
         return;
       }
 
-      const response = await axios.put(`${API_URL}/loans/${id}/spent/${editSpentData.id}`, {
+      const response = await loans.updateSpent(id, editSpentData.id, {
         amount: amount,
         date: editSpentData.date,
         description: editSpentData.description
@@ -627,26 +591,18 @@ function LoanDetails({ onBack }) {
       }
     } catch (error) {
       console.error('Error updating spent:', error);
-      if (error.response) {
-        setError(error.response.data.message || 'Failed to update spent amount');
-      } else {
-        setError('Failed to connect to server');
-      }
+      setError(error.message);
     }
   };
 
   const handleDeleteSpent = async (spentId) => {
     try {
-      await axios.delete(`${API_URL}/loans/${id}/spent/${spentId}`);
+      await loans.deleteSpent(id, spentId);
       await fetchLoanDetails();
       setError(null);
     } catch (error) {
       console.error('Error deleting spent:', error);
-      if (error.response) {
-        setError(error.response.data.message || 'Failed to delete spent amount');
-      } else {
-        setError('Failed to connect to server');
-      }
+      setError(error.message);
     }
   };
 

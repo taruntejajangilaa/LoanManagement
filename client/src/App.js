@@ -30,11 +30,12 @@ import PaymentIcon from '@mui/icons-material/Payment';
 import EditIcon from '@mui/icons-material/Edit';
 import AssessmentIcon from '@mui/icons-material/Assessment';
 import { createTheme, ThemeProvider } from '@mui/material/styles';
-import axios from 'axios';
-import LoanDetails from './components/LoanDetails';
 import { Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom';
+import LoanDetails from './components/LoanDetails';
 import PersonalLoanOutstandings from './components/PersonalLoanOutstandings';
 import GoldLoanOutstandings from './components/GoldLoanOutstandings';
+import ErrorBoundary from './components/ErrorBoundary';
+import { loans } from './utils/api';
 
 // Update API URL to use environment variables
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
@@ -144,17 +145,17 @@ function App() {
     try {
       setLoading(true);
       setError(null);
-      const response = await axios.get(`${API_URL}/loans`);
+      const response = await loans.getAll();
       setLoans(response.data);
       setPersonalLoans(response.data.filter(loan => !loan.loanType || loan.loanType === 'personal'));
       setGoldLoans(response.data.filter(loan => loan.loanType === 'gold'));
       setCreditCards(response.data.filter(loan => loan.loanType === 'creditCard'));
     } catch (error) {
       console.error('Error fetching loans:', error);
-      setError(error.response?.data?.message || 'Failed to fetch loans');
+      setError(error.message);
       setSnackbar({
         open: true,
-        message: error.response?.data?.message || 'Failed to fetch loans',
+        message: error.message,
         severity: 'error'
       });
     } finally {
@@ -191,13 +192,7 @@ function App() {
   const handleSubmit = async () => {
     try {
       // Validate required fields
-      console.log('Starting loan creation with data:', formData);
       if (!formData.borrowerName || !formData.amount || !formData.startDate) {
-        console.log('Missing required fields:', {
-          borrowerName: !formData.borrowerName,
-          amount: !formData.amount,
-          startDate: !formData.startDate
-        });
         setSnackbar({
           open: true,
           message: 'Please fill in all required fields',
@@ -231,7 +226,6 @@ function App() {
         };
       } else {
         if (!formData.interestRate) {
-          console.log('Missing interest rate');
           setSnackbar({
             open: true,
             message: 'Interest rate is required',
@@ -252,7 +246,6 @@ function App() {
 
         if (formData.loanType === 'personal') {
           if (!formData.term) {
-            console.log('Missing term for personal loan');
             setSnackbar({
               open: true,
               message: 'Term is required for personal loans',
@@ -264,11 +257,7 @@ function App() {
         }
       }
 
-      console.log('Submitting loan data to API:', submitData);
-      console.log('API URL:', `${API_URL}/loans`);
-
-      const response = await axios.post(`${API_URL}/loans`, submitData);
-      console.log('API Response:', response.data);
+      const response = await loans.create(submitData);
       
       if (response.data) {
         setSnackbar({
@@ -282,17 +271,9 @@ function App() {
       }
     } catch (error) {
       console.error('Error creating loan:', error);
-      console.error('Error details:', {
-        message: error.message,
-        response: error.response?.data,
-        status: error.response?.status
-      });
-      const errorMessage = error.response?.data?.message || 
-                          error.response?.data?.error || 
-                          'Error creating loan';
       setSnackbar({
         open: true,
-        message: errorMessage,
+        message: error.message,
         severity: 'error'
       });
     }
@@ -359,7 +340,7 @@ function App() {
         return;
       }
 
-      const response = await axios.post(`${API_URL}/loans/${selectedLoan}/prepayment`, {
+      const response = await loans.addPrepayment(selectedLoan, {
         amount: amount,
         date: prepaymentData.date
       });
@@ -377,7 +358,7 @@ function App() {
       console.error('Error processing prepayment:', error);
       setSnackbar({
         open: true,
-        message: error.response?.data?.message || 'Error processing prepayment',
+        message: error.message,
         severity: 'error'
       });
     }
@@ -510,7 +491,7 @@ function App() {
   const handleEditSubmit = async (e) => {
     e.preventDefault();
     try {
-      await axios.put(`${API_URL}/loans/${editLoanData._id}`, editLoanData);
+      await loans.update(editLoanData._id, editLoanData);
       fetchLoans();
       handleEditClose();
       setSnackbar({
@@ -522,7 +503,7 @@ function App() {
       console.error('Error updating loan:', error);
       setSnackbar({
         open: true,
-        message: 'Error updating loan',
+        message: error.message,
         severity: 'error'
       });
     }
@@ -540,7 +521,7 @@ function App() {
 
   const handleDeleteConfirm = async () => {
     try {
-      await axios.delete(`${API_URL}/loans/${deleteLoan._id}`);
+      await loans.delete(deleteLoan._id);
       setSnackbar({
         open: true,
         message: 'Loan deleted successfully',
@@ -552,7 +533,7 @@ function App() {
       console.error('Error deleting loan:', error);
       setSnackbar({
         open: true,
-        message: 'Error deleting loan',
+        message: error.message,
         severity: 'error'
       });
     }
@@ -634,7 +615,7 @@ function App() {
         return;
       }
 
-      const response = await axios.post(`${API_URL}/loans/${selectedPaymentLoan}/payment`, {
+      const response = await loans.addPayment(selectedPaymentLoan, {
         amount: amount,
         date: paymentData.date
       });
@@ -652,7 +633,7 @@ function App() {
       console.error('Error processing payment:', error);
       setSnackbar({
         open: true,
-        message: error.response?.data?.message || 'Error processing payment',
+        message: error.message,
         severity: 'error'
       });
     }
@@ -669,7 +650,7 @@ function App() {
         return;
       }
 
-      const response = await axios.post(`${API_URL}/loans/${selectedLoan}/spent`, {
+      const response = await loans.addSpent(selectedLoan, {
         amount: Number(spentData.amount),
         date: spentData.date,
         description: spentData.description
@@ -688,7 +669,7 @@ function App() {
       console.error('Error adding spent:', error);
       setSnackbar({
         open: true,
-        message: error.response?.data?.error || 'Error adding spent amount',
+        message: error.message,
         severity: 'error'
       });
     }
@@ -1156,7 +1137,7 @@ function App() {
                            Loan Amount
                          </Typography>
                          <Typography variant="h6" sx={{ fontSize: { xs: '0.9rem', sm: '1rem' } }}>
-                           ₹{card.amount.toLocaleString()}
+                           ₹{(card.amount || 0).toLocaleString()}
                          </Typography>
                        </Box>
                      </Grid>
@@ -1186,7 +1167,7 @@ function App() {
                            Credit Limit
                          </Typography>
                          <Typography variant="h6" sx={{ fontSize: { xs: '0.9rem', sm: '1rem' } }}>
-                           ₹{card.creditLimit.toLocaleString()}
+                           ₹{(card.creditLimit || 0).toLocaleString()}
                          </Typography>
                        </Box>
                      </Grid>
@@ -1264,381 +1245,383 @@ function App() {
 
   return (
     <ThemeProvider theme={theme}>
-      <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
-        <AppBar 
-          position="static" 
-          elevation={0} 
-          sx={{ 
-            bgcolor: 'white',
-            color: 'text.primary',
-            borderBottom: '1px solid',
-            borderColor: 'divider',
-            py: { xs: 0.5, sm: 1 }
-          }}
-        >
-          <Toolbar sx={{ 
-            maxWidth: 'lg', 
-            width: '100%', 
-            mx: 'auto',
-            px: { xs: 1, sm: 2, md: 3 }
-          }}>
-            <Box sx={{ 
-              display: 'flex', 
-              alignItems: 'center',
-              gap: { xs: 1, sm: 2 },
-              flexGrow: 1 
+      <ErrorBoundary onRetry={fetchLoans}>
+        <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
+          <AppBar 
+            position="static" 
+            elevation={0} 
+            sx={{ 
+              bgcolor: 'white',
+              color: 'text.primary',
+              borderBottom: '1px solid',
+              borderColor: 'divider',
+              py: { xs: 0.5, sm: 1 }
+            }}
+          >
+            <Toolbar sx={{ 
+              maxWidth: 'lg', 
+              width: '100%', 
+              mx: 'auto',
+              px: { xs: 1, sm: 2, md: 3 }
             }}>
               <Box sx={{ 
-                bgcolor: 'primary.main',
-                color: 'white',
-                p: { xs: 1, sm: 1.5 },
-                borderRadius: 2,
-                display: 'flex',
+                display: 'flex', 
                 alignItems: 'center',
-                justifyContent: 'center',
-                width: { xs: 36, sm: 48 },
-                height: { xs: 36, sm: 48 }
+                gap: { xs: 1, sm: 2 },
+                flexGrow: 1 
               }}>
-                <Typography variant="h6" sx={{ fontWeight: 600, fontSize: { xs: '1rem', sm: '1.25rem' } }}>
-                  T
-                </Typography>
-              </Box>
-              <Box>
-                <Typography variant="h5" sx={{ 
-                  fontWeight: 700,
-                  background: 'linear-gradient(45deg, #2563eb 30%, #3b82f6 90%)',
-                  WebkitBackgroundClip: 'text',
-                  WebkitTextFillColor: 'transparent',
-                  fontSize: { xs: '1.25rem', sm: '1.5rem', md: '1.75rem' }
+                <Box sx={{ 
+                  bgcolor: 'primary.main',
+                  color: 'white',
+                  p: { xs: 1, sm: 1.5 },
+                  borderRadius: 2,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  width: { xs: 36, sm: 48 },
+                  height: { xs: 36, sm: 48 }
                 }}>
-                  Tarun Personal Debt Management
-                </Typography>
-                <Typography variant="body2" color="text.secondary" sx={{ display: { xs: 'none', sm: 'block' } }}>
-                  Track and manage your loans efficiently
-                </Typography>
+                  <Typography variant="h6" sx={{ fontWeight: 600, fontSize: { xs: '1rem', sm: '1.25rem' } }}>
+                    T
+                  </Typography>
+                </Box>
+                <Box>
+                  <Typography variant="h5" sx={{ 
+                    fontWeight: 700,
+                    background: 'linear-gradient(45deg, #2563eb 30%, #3b82f6 90%)',
+                    WebkitBackgroundClip: 'text',
+                    WebkitTextFillColor: 'transparent',
+                    fontSize: { xs: '1.25rem', sm: '1.5rem', md: '1.75rem' }
+                  }}>
+                    Tarun Personal Debt Management
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary" sx={{ display: { xs: 'none', sm: 'block' } }}>
+                    Track and manage your loans efficiently
+                  </Typography>
+                </Box>
               </Box>
-            </Box>
-          </Toolbar>
-          <Paper elevation={0} sx={{ borderBottom: 1, borderColor: 'divider' }}>
-            <Box sx={{ borderBottom: 1, borderColor: 'divider', display: 'flex', justifyContent: 'center' }}>
-              <Tabs 
-                value={value} 
-                onChange={handleChange} 
-                aria-label="loan type tabs"
-                variant="scrollable"
-                scrollButtons="auto"
-                sx={{
-                  '& .MuiTabs-flexContainer': {
-                    justifyContent: 'center'
-                  },
-                  '& .MuiTab-root': { 
-                    minWidth: { xs: 100, sm: 150 },
-                    fontSize: { xs: '0.8rem', sm: '0.9rem' }
-                  },
-                  '& .MuiTabs-indicator': {
-                    height: 3,
-                    bgcolor: 'primary.main'
-                  }
-                }}
-              >
-                <Tab 
-                  label="Personal Loans" 
-                  value="/personal-loans" 
-                  sx={{ 
-                    fontWeight: 600,
-                    textTransform: 'none',
-                    fontSize: { xs: '0.875rem', sm: '1rem' }
+            </Toolbar>
+            <Paper elevation={0} sx={{ borderBottom: 1, borderColor: 'divider' }}>
+              <Box sx={{ borderBottom: 1, borderColor: 'divider', display: 'flex', justifyContent: 'center' }}>
+                <Tabs 
+                  value={value} 
+                  onChange={handleChange} 
+                  aria-label="loan type tabs"
+                  variant="scrollable"
+                  scrollButtons="auto"
+                  sx={{
+                    '& .MuiTabs-flexContainer': {
+                      justifyContent: 'center'
+                    },
+                    '& .MuiTab-root': { 
+                      minWidth: { xs: 100, sm: 150 },
+                      fontSize: { xs: '0.8rem', sm: '0.9rem' }
+                    },
+                    '& .MuiTabs-indicator': {
+                      height: 3,
+                      bgcolor: 'primary.main'
+                    }
                   }}
-                />
-                <Tab 
-                  label="Gold Loans" 
-                  value="/gold-loans" 
-                  sx={{ 
-                    fontWeight: 600,
-                    textTransform: 'none',
-                    fontSize: { xs: '0.875rem', sm: '1rem' }
-                  }}
-                />
-                <Tab 
-                  label="Credit Cards" 
-                  value="/credit-cards" 
-                  sx={{ 
-                    fontWeight: 600,
-                    textTransform: 'none',
-                    fontSize: { xs: '0.875rem', sm: '1rem' }
-                  }}
-                />
-              </Tabs>
-            </Box>
-          </Paper>
-        </AppBar>
+                >
+                  <Tab 
+                    label="Personal Loans" 
+                    value="/personal-loans" 
+                    sx={{ 
+                      fontWeight: 600,
+                      textTransform: 'none',
+                      fontSize: { xs: '0.875rem', sm: '1rem' }
+                    }}
+                  />
+                  <Tab 
+                    label="Gold Loans" 
+                    value="/gold-loans" 
+                    sx={{ 
+                      fontWeight: 600,
+                      textTransform: 'none',
+                      fontSize: { xs: '0.875rem', sm: '1rem' }
+                    }}
+                  />
+                  <Tab 
+                    label="Credit Cards" 
+                    value="/credit-cards" 
+                    sx={{ 
+                      fontWeight: 600,
+                      textTransform: 'none',
+                      fontSize: { xs: '0.875rem', sm: '1rem' }
+                    }}
+                  />
+                </Tabs>
+              </Box>
+            </Paper>
+          </AppBar>
 
-        <Box sx={{ flex: 1, bgcolor: '#f8fafc', p: { xs: 1, sm: 2, md: 3 } }}>
-          <Routes>
-            <Route path="/" element={<Navigate to="/personal-loans" replace />} />
-            <Route path="/personal-loans" element={renderPersonalLoans()} />
-            <Route path="/personal-loans/outstandings" element={<PersonalLoanOutstandings />} />
-            <Route path="/gold-loans" element={renderGoldLoans()} />
-            <Route path="/gold-loans/outstandings" element={<GoldLoanOutstandings />} />
-            <Route path="/credit-cards" element={renderCreditCards()} />
-            <Route path="/loans/:id" element={<LoanDetails onBack={() => navigate(-1)} />} />
-          </Routes>
-        </Box>
+          <Box sx={{ flex: 1, bgcolor: '#f8fafc', p: { xs: 1, sm: 2, md: 3 } }}>
+            <Routes>
+              <Route path="/" element={<Navigate to="/personal-loans" replace />} />
+              <Route path="/personal-loans" element={renderPersonalLoans()} />
+              <Route path="/personal-loans/outstandings" element={<PersonalLoanOutstandings />} />
+              <Route path="/gold-loans" element={renderGoldLoans()} />
+              <Route path="/gold-loans/outstandings" element={<GoldLoanOutstandings />} />
+              <Route path="/credit-cards" element={renderCreditCards()} />
+              <Route path="/loans/:id" element={<LoanDetails onBack={() => navigate(-1)} />} />
+            </Routes>
+          </Box>
 
-        <Dialog open={open} onClose={handleClose} maxWidth="sm" fullWidth>
-          <DialogTitle>
-            Add New {formData.loanType === 'creditCard' ? 'Credit Card' : 
+          <Dialog open={open} onClose={handleClose} maxWidth="sm" fullWidth>
+            <DialogTitle>
+              Add New {formData.loanType === 'creditCard' ? 'Credit Card' : 
+                       formData.loanType === 'gold' ? 'Gold Loan' : 'Personal Loan'}
+            </DialogTitle>
+            <DialogContent>
+              <Box component="form" sx={{ mt: 2 }}>
+                {renderDialogContent()}
+              </Box>
+            </DialogContent>
+            <DialogActions>
+              <Button onClick={handleClose}>Cancel</Button>
+              <Button onClick={handleSubmit} variant="contained">
+                Add {formData.loanType === 'creditCard' ? 'Credit Card' : 
                      formData.loanType === 'gold' ? 'Gold Loan' : 'Personal Loan'}
-          </DialogTitle>
-          <DialogContent>
-            <Box component="form" sx={{ mt: 2 }}>
-              {renderDialogContent()}
-            </Box>
-          </DialogContent>
-          <DialogActions>
-            <Button onClick={handleClose}>Cancel</Button>
-            <Button onClick={handleSubmit} variant="contained">
-              Add {formData.loanType === 'creditCard' ? 'Credit Card' : 
-                   formData.loanType === 'gold' ? 'Gold Loan' : 'Personal Loan'}
-            </Button>
-          </DialogActions>
-        </Dialog>
+              </Button>
+            </DialogActions>
+          </Dialog>
 
-        <Dialog open={prepaymentOpen} onClose={handlePrepaymentClose} maxWidth="sm" fullWidth>
-          <DialogTitle>Prepay Loan</DialogTitle>
-          <DialogContent>
-            <Box sx={{ mt: 2 }}>
-              <Typography variant="body1" gutterBottom>
-                Borrower: {prepaymentData.borrowerName}
-              </Typography>
-              <Typography variant="body1" gutterBottom>
-                Current Balance: ₹{prepaymentData.loanAmount?.toLocaleString()}
-              </Typography>
-              <TextField
-                fullWidth
-                label="Prepayment Amount"
-                name="amount"
-                type="number"
-                value={prepaymentData.amount}
-                onChange={(e) => setPrepaymentData({ ...prepaymentData, amount: e.target.value })}
-                margin="normal"
-                required
-              />
-              <TextField
-                fullWidth
-                label="Prepayment Date"
-                name="date"
-                type="date"
-                value={prepaymentData.date}
-                onChange={(e) => setPrepaymentData({ ...prepaymentData, date: e.target.value })}
-                margin="normal"
-                required
-                InputLabelProps={{
-                  shrink: true,
-                }}
-              />
-            </Box>
-          </DialogContent>
-          <DialogActions>
-            <Button onClick={handlePrepaymentClose}>Cancel</Button>
-            <Button onClick={handlePrepaymentSubmit} variant="contained" color="primary">
-              Process Prepayment
-            </Button>
-          </DialogActions>
-        </Dialog>
-
-        <Dialog open={editDialogOpen} onClose={handleEditClose} maxWidth="sm" fullWidth>
-          <DialogTitle>
-            Edit {editLoanData.loanType === 'gold' ? 'Gold' : 'Personal'} Loan
-          </DialogTitle>
-          <DialogContent>
-            <Box component="form" sx={{ mt: 2 }}>
-              <TextField
-                fullWidth
-                label="Borrower Name"
-                name="borrowerName"
-                value={editLoanData.borrowerName}
-                onChange={(e) => setEditLoanData({ ...editLoanData, borrowerName: e.target.value })}
-                margin="normal"
-                required
-              />
-              <TextField
-                fullWidth
-                label="Loan Amount"
-                name="amount"
-                type="number"
-                value={editLoanData.amount}
-                onChange={(e) => setEditLoanData({ ...editLoanData, amount: e.target.value })}
-                margin="normal"
-                required
-              />
-              <TextField
-                fullWidth
-                label="Interest Rate (%)"
-                name="interestRate"
-                type="number"
-                value={editLoanData.interestRate}
-                onChange={(e) => setEditLoanData({ ...editLoanData, interestRate: e.target.value })}
-                margin="normal"
-                required
-              />
-              {editLoanData.loanType === 'personal' && (
+          <Dialog open={prepaymentOpen} onClose={handlePrepaymentClose} maxWidth="sm" fullWidth>
+            <DialogTitle>Prepay Loan</DialogTitle>
+            <DialogContent>
+              <Box sx={{ mt: 2 }}>
+                <Typography variant="body1" gutterBottom>
+                  Borrower: {prepaymentData.borrowerName}
+                </Typography>
+                <Typography variant="body1" gutterBottom>
+                  Current Balance: ₹{prepaymentData.loanAmount?.toLocaleString()}
+                </Typography>
                 <TextField
                   fullWidth
-                  label="Term (months)"
-                  name="term"
+                  label="Prepayment Amount"
+                  name="amount"
                   type="number"
-                  value={editLoanData.term}
-                  onChange={(e) => setEditLoanData({ ...editLoanData, term: e.target.value })}
+                  value={prepaymentData.amount}
+                  onChange={(e) => setPrepaymentData({ ...prepaymentData, amount: e.target.value })}
                   margin="normal"
                   required
                 />
-              )}
-              <TextField
-                fullWidth
-                label="Start Date"
-                name="startDate"
-                type="date"
-                value={editLoanData.startDate}
-                onChange={(e) => setEditLoanData({ ...editLoanData, startDate: e.target.value })}
-                margin="normal"
-                required
-                InputLabelProps={{
-                  shrink: true,
-                }}
-              />
-            </Box>
-          </DialogContent>
-          <DialogActions>
-            <Button onClick={handleEditClose}>Cancel</Button>
-            <Button 
-              onClick={handleEditSubmit} 
-              variant="contained"
-              sx={editLoanData.loanType === 'gold' ? {
-                bgcolor: '#b45309',
-                '&:hover': {
-                  bgcolor: '#a34808',
-                }
-              } : {}}
-            >
-              Save Changes
-            </Button>
-          </DialogActions>
-        </Dialog>
+                <TextField
+                  fullWidth
+                  label="Prepayment Date"
+                  name="date"
+                  type="date"
+                  value={prepaymentData.date}
+                  onChange={(e) => setPrepaymentData({ ...prepaymentData, date: e.target.value })}
+                  margin="normal"
+                  required
+                  InputLabelProps={{
+                    shrink: true,
+                  }}
+                />
+              </Box>
+            </DialogContent>
+            <DialogActions>
+              <Button onClick={handlePrepaymentClose}>Cancel</Button>
+              <Button onClick={handlePrepaymentSubmit} variant="contained" color="primary">
+                Process Prepayment
+              </Button>
+            </DialogActions>
+          </Dialog>
 
-        <Dialog open={deleteDialogOpen} onClose={handleDeleteClose}>
-          <DialogTitle>Delete Loan</DialogTitle>
-          <DialogContent>
-            <DialogContentText>
-              Are you sure you want to delete this loan? This action cannot be undone.
-            </DialogContentText>
-          </DialogContent>
-          <DialogActions>
-            <Button onClick={handleDeleteClose}>Cancel</Button>
-            <Button onClick={handleDeleteConfirm} color="error" variant="contained">
-              Delete
-            </Button>
-          </DialogActions>
-        </Dialog>
+          <Dialog open={editDialogOpen} onClose={handleEditClose} maxWidth="sm" fullWidth>
+            <DialogTitle>
+              Edit {editLoanData.loanType === 'gold' ? 'Gold' : 'Personal'} Loan
+            </DialogTitle>
+            <DialogContent>
+              <Box component="form" sx={{ mt: 2 }}>
+                <TextField
+                  fullWidth
+                  label="Borrower Name"
+                  name="borrowerName"
+                  value={editLoanData.borrowerName}
+                  onChange={(e) => setEditLoanData({ ...editLoanData, borrowerName: e.target.value })}
+                  margin="normal"
+                  required
+                />
+                <TextField
+                  fullWidth
+                  label="Loan Amount"
+                  name="amount"
+                  type="number"
+                  value={editLoanData.amount}
+                  onChange={(e) => setEditLoanData({ ...editLoanData, amount: e.target.value })}
+                  margin="normal"
+                  required
+                />
+                <TextField
+                  fullWidth
+                  label="Interest Rate (%)"
+                  name="interestRate"
+                  type="number"
+                  value={editLoanData.interestRate}
+                  onChange={(e) => setEditLoanData({ ...editLoanData, interestRate: e.target.value })}
+                  margin="normal"
+                  required
+                />
+                {editLoanData.loanType === 'personal' && (
+                  <TextField
+                    fullWidth
+                    label="Term (months)"
+                    name="term"
+                    type="number"
+                    value={editLoanData.term}
+                    onChange={(e) => setEditLoanData({ ...editLoanData, term: e.target.value })}
+                    margin="normal"
+                    required
+                  />
+                )}
+                <TextField
+                  fullWidth
+                  label="Start Date"
+                  name="startDate"
+                  type="date"
+                  value={editLoanData.startDate}
+                  onChange={(e) => setEditLoanData({ ...editLoanData, startDate: e.target.value })}
+                  margin="normal"
+                  required
+                  InputLabelProps={{
+                    shrink: true,
+                  }}
+                />
+              </Box>
+            </DialogContent>
+            <DialogActions>
+              <Button onClick={handleEditClose}>Cancel</Button>
+              <Button 
+                onClick={handleEditSubmit} 
+                variant="contained"
+                sx={editLoanData.loanType === 'gold' ? {
+                  bgcolor: '#b45309',
+                  '&:hover': {
+                    bgcolor: '#a34808',
+                  }
+                } : {}}
+              >
+                Save Changes
+              </Button>
+            </DialogActions>
+          </Dialog>
 
-        <Dialog open={paymentDialogOpen} onClose={handlePaymentDialogClose} maxWidth="sm" fullWidth>
-          <DialogTitle>Make Payment</DialogTitle>
-          <DialogContent>
-            <Box component="form" sx={{ mt: 2 }}>
-              <TextField
-                fullWidth
-                label="Amount"
-                name="amount"
-                type="number"
-                value={paymentData.amount}
-                onChange={(e) => setPaymentData({ ...paymentData, amount: e.target.value })}
-                margin="normal"
-                required
-              />
-              <TextField
-                fullWidth
-                label="Date"
-                name="date"
-                type="date"
-                value={paymentData.date}
-                onChange={(e) => setPaymentData({ ...paymentData, date: e.target.value })}
-                margin="normal"
-                required
-                InputLabelProps={{
-                  shrink: true,
-                }}
-              />
-            </Box>
-          </DialogContent>
-          <DialogActions>
-            <Button onClick={handlePaymentDialogClose}>Cancel</Button>
-            <Button onClick={handlePaymentSubmit} variant="contained">
-              Make Payment
-            </Button>
-          </DialogActions>
-        </Dialog>
+          <Dialog open={deleteDialogOpen} onClose={handleDeleteClose}>
+            <DialogTitle>Delete Loan</DialogTitle>
+            <DialogContent>
+              <DialogContentText>
+                Are you sure you want to delete this loan? This action cannot be undone.
+              </DialogContentText>
+            </DialogContent>
+            <DialogActions>
+              <Button onClick={handleDeleteClose}>Cancel</Button>
+              <Button onClick={handleDeleteConfirm} color="error" variant="contained">
+                Delete
+              </Button>
+            </DialogActions>
+          </Dialog>
 
-        <Dialog open={spentDialogOpen} onClose={handleSpentDialogClose} maxWidth="sm" fullWidth>
-          <DialogTitle>Add Spent Amount</DialogTitle>
-          <DialogContent>
-            <Box component="form" sx={{ mt: 2 }}>
-              <TextField
-                fullWidth
-                label="Amount"
-                name="amount"
-                type="number"
-                value={spentData.amount}
-                onChange={(e) => setSpentData({ ...spentData, amount: e.target.value })}
-                margin="normal"
-                required
-              />
-              <TextField
-                fullWidth
-                label="Description"
-                name="description"
-                value={spentData.description}
-                onChange={(e) => setSpentData({ ...spentData, description: e.target.value })}
-                margin="normal"
-                required
-              />
-              <TextField
-                fullWidth
-                label="Date"
-                name="date"
-                type="date"
-                value={spentData.date}
-                onChange={(e) => setSpentData({ ...spentData, date: e.target.value })}
-                margin="normal"
-                required
-                InputLabelProps={{
-                  shrink: true,
-                }}
-              />
-            </Box>
-          </DialogContent>
-          <DialogActions>
-            <Button onClick={handleSpentDialogClose}>Cancel</Button>
-            <Button onClick={handleSpentSubmit} variant="contained">
-              Add Spent
-            </Button>
-          </DialogActions>
-        </Dialog>
+          <Dialog open={paymentDialogOpen} onClose={handlePaymentDialogClose} maxWidth="sm" fullWidth>
+            <DialogTitle>Make Payment</DialogTitle>
+            <DialogContent>
+              <Box component="form" sx={{ mt: 2 }}>
+                <TextField
+                  fullWidth
+                  label="Amount"
+                  name="amount"
+                  type="number"
+                  value={paymentData.amount}
+                  onChange={(e) => setPaymentData({ ...paymentData, amount: e.target.value })}
+                  margin="normal"
+                  required
+                />
+                <TextField
+                  fullWidth
+                  label="Date"
+                  name="date"
+                  type="date"
+                  value={paymentData.date}
+                  onChange={(e) => setPaymentData({ ...paymentData, date: e.target.value })}
+                  margin="normal"
+                  required
+                  InputLabelProps={{
+                    shrink: true,
+                  }}
+                />
+              </Box>
+            </DialogContent>
+            <DialogActions>
+              <Button onClick={handlePaymentDialogClose}>Cancel</Button>
+              <Button onClick={handlePaymentSubmit} variant="contained">
+                Make Payment
+              </Button>
+            </DialogActions>
+          </Dialog>
 
-        <Snackbar 
-          open={snackbar.open} 
-          autoHideDuration={6000} 
-          onClose={handleSnackbarClose}
-          anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
-        >
-          <Alert 
-            onClose={handleSnackbarClose} 
-            severity={snackbar.severity}
-            sx={{ width: '100%' }}
+          <Dialog open={spentDialogOpen} onClose={handleSpentDialogClose} maxWidth="sm" fullWidth>
+            <DialogTitle>Add Spent Amount</DialogTitle>
+            <DialogContent>
+              <Box component="form" sx={{ mt: 2 }}>
+                <TextField
+                  fullWidth
+                  label="Amount"
+                  name="amount"
+                  type="number"
+                  value={spentData.amount}
+                  onChange={(e) => setSpentData({ ...spentData, amount: e.target.value })}
+                  margin="normal"
+                  required
+                />
+                <TextField
+                  fullWidth
+                  label="Description"
+                  name="description"
+                  value={spentData.description}
+                  onChange={(e) => setSpentData({ ...spentData, description: e.target.value })}
+                  margin="normal"
+                  required
+                />
+                <TextField
+                  fullWidth
+                  label="Date"
+                  name="date"
+                  type="date"
+                  value={spentData.date}
+                  onChange={(e) => setSpentData({ ...spentData, date: e.target.value })}
+                  margin="normal"
+                  required
+                  InputLabelProps={{
+                    shrink: true,
+                  }}
+                />
+              </Box>
+            </DialogContent>
+            <DialogActions>
+              <Button onClick={handleSpentDialogClose}>Cancel</Button>
+              <Button onClick={handleSpentSubmit} variant="contained">
+                Add Spent
+              </Button>
+            </DialogActions>
+          </Dialog>
+
+          <Snackbar 
+            open={snackbar.open} 
+            autoHideDuration={6000} 
+            onClose={handleSnackbarClose}
+            anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
           >
-            {snackbar.message}
-          </Alert>
-        </Snackbar>
-      </Box>
+            <Alert 
+              onClose={handleSnackbarClose} 
+              severity={snackbar.severity}
+              sx={{ width: '100%' }}
+            >
+              {snackbar.message}
+            </Alert>
+          </Snackbar>
+        </Box>
+      </ErrorBoundary>
     </ThemeProvider>
   );
 }
