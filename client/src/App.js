@@ -21,7 +21,8 @@ import {
   Alert,
   DialogContentText,
   Tabs,
-  Tab
+  Tab,
+  CircularProgress
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import VisibilityIcon from '@mui/icons-material/Visibility';
@@ -70,6 +71,8 @@ const theme = createTheme({
 
 function App() {
   const [loans, setLoans] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [open, setOpen] = useState(false);
   const [prepaymentOpen, setPrepaymentOpen] = useState(false);
   const [selectedLoan, setSelectedLoan] = useState(null);
@@ -139,6 +142,8 @@ function App() {
 
   const fetchLoans = async () => {
     try {
+      setLoading(true);
+      setError(null);
       const response = await axios.get(`${API_URL}/loans`);
       setLoans(response.data);
       setPersonalLoans(response.data.filter(loan => !loan.loanType || loan.loanType === 'personal'));
@@ -146,11 +151,14 @@ function App() {
       setCreditCards(response.data.filter(loan => loan.loanType === 'creditCard'));
     } catch (error) {
       console.error('Error fetching loans:', error);
+      setError(error.response?.data?.message || 'Failed to fetch loans');
       setSnackbar({
         open: true,
-        message: 'Error fetching loans',
+        message: error.response?.data?.message || 'Failed to fetch loans',
         severity: 'error'
       });
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -681,6 +689,20 @@ function App() {
     setSelectedLoan(null);
   };
 
+  const renderLoadingState = () => (
+    <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '200px' }}>
+      <CircularProgress />
+    </Box>
+  );
+
+  const renderErrorState = () => (
+    <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '200px' }}>
+      <Alert severity="error" sx={{ width: '100%', maxWidth: '600px' }}>
+        {error}
+      </Alert>
+    </Box>
+  );
+
   const renderPersonalLoans = () => (
     <Box sx={{ maxWidth: '1200px', mx: 'auto', px: { xs: 1, sm: 2 } }}>
       {/* Personal Loans Section */}
@@ -709,129 +731,140 @@ function App() {
         </Box>
       </Box>
 
-      <Grid container spacing={{ xs: 2, sm: 3 }}>
-        {personalLoans.map((loan) => (
-          <Grid item xs={12} sm={6} md={4} key={loan._id}>
-            <Card 
-              sx={{
-                height: '100%',
-                display: 'flex',
-                flexDirection: 'column',
-                '&:hover': {
-                  boxShadow: 6
-                }
-              }}
-            >
-              <CardContent sx={{ flexGrow: 1, p: { xs: 2, sm: 3 } }}>
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
-                  <Typography variant="h6" component="div" sx={{ 
-                    fontWeight: 600,
-                    fontSize: { xs: '1rem', sm: '1.1rem' }
-                  }}>
-                    {loan.borrowerName}
-                  </Typography>
-                  <Chip
-                    label={loan.status}
-                    color={getStatusColor(loan.status)}
-                    size="small"
-                  />
-                </Box>
-                <Divider sx={{ my: 2 }} />
-                <Grid container spacing={{ xs: 1, sm: 2 }}>
-                  <Grid item xs={6}>
-                    <Box sx={{ 
-                      p: { xs: 1, sm: 2 }, 
-                      borderRadius: 1, 
-                      bgcolor: 'rgba(37, 99, 235, 0.05)',
-                      textAlign: 'center'
-                    }}>
-                      <Typography variant="body2" color="text.secondary">
-                        Loan Amount
-                      </Typography>
-                      <Typography variant="h6" sx={{ fontSize: { xs: '0.9rem', sm: '1rem' } }}>
-                        ₹{loan.amount.toLocaleString()}
-                      </Typography>
-                    </Box>
-                  </Grid>
-                  <Grid item xs={6}>
-                    <Box sx={{ 
-                      p: { xs: 1, sm: 2 }, 
-                      borderRadius: 1, 
-                      bgcolor: 'rgba(37, 99, 235, 0.05)',
-                      textAlign: 'center'
-                    }}>
-                      <Typography variant="body2" color="text.secondary">
-                        Interest Rate
-                      </Typography>
-                      <Typography variant="h6" sx={{ fontSize: { xs: '0.9rem', sm: '1rem' } }}>
-                        {loan.interestRate}%
-                      </Typography>
-                    </Box>
-                  </Grid>
-                  <Grid item xs={6}>
-                    <Box sx={{ 
-                      p: { xs: 1, sm: 2 }, 
-                      borderRadius: 1, 
-                      bgcolor: 'rgba(37, 99, 235, 0.05)',
-                      textAlign: 'center'
-                    }}>
-                      <Typography variant="body2" color="text.secondary">
-                        Term
-                      </Typography>
-                      <Typography variant="h6" sx={{ fontSize: { xs: '0.9rem', sm: '1rem' } }}>
-                        {loan.term} months
-                      </Typography>
-                    </Box>
-                  </Grid>
-                  <Grid item xs={6}>
-                    <Box sx={{ 
-                      p: { xs: 1, sm: 2 }, 
-                      borderRadius: 1, 
-                      bgcolor: 'rgba(37, 99, 235, 0.05)',
-                      textAlign: 'center'
-                    }}>
-                      <Typography variant="body2" color="text.secondary">
-                        EMI Amount
-                      </Typography>
-                      <Typography variant="h6" sx={{ fontSize: { xs: '0.9rem', sm: '1rem' } }}>
-                        ₹{calculateEMI(loan.amount, loan.interestRate, loan.term).toLocaleString()}
-                      </Typography>
-                    </Box>
-                  </Grid>
-                </Grid>
-              </CardContent>
-              <CardActions sx={{ mt: 'auto', p: 2, display: 'flex', flexDirection: 'column', gap: 1 }}>
-                <Button
-                  fullWidth
-                  variant="contained"
-                  color="primary"
-                  startIcon={<VisibilityIcon />}
-                  onClick={() => handleViewDetails(loan._id)}
-                >
-                  View Details
-                </Button>
-                <Button
-                  fullWidth
-                  variant="outlined"
-                  color="primary"
-                  startIcon={<EditIcon />}
-                  onClick={() => handleEditOpen(loan)}
-                >
-                  Edit Loan
-                </Button>
-                <Button
-                  fullWidth
-                  variant="outlined"
-                  color="error"
-                  onClick={() => handleDeleteOpen(loan)}
-                >
-                  Delete Loan
-                </Button>
-              </CardActions>
-            </Card>
-          </Grid>
-        ))}
-      </Grid>
+      {loading ? renderLoadingState() : 
+       error ? renderErrorState() :
+       <Grid container spacing={{ xs: 2, sm: 3 }}>
+         {personalLoans.length === 0 ? (
+           <Grid item xs={12}>
+             <Alert severity="info" sx={{ width: '100%' }}>
+               No personal loans found. Add a new loan to get started.
+             </Alert>
+           </Grid>
+         ) : (
+           personalLoans.map((loan) => (
+             <Grid item xs={12} sm={6} md={4} key={loan._id}>
+               <Card 
+                 sx={{
+                   height: '100%',
+                   display: 'flex',
+                   flexDirection: 'column',
+                   '&:hover': {
+                     boxShadow: 6
+                   }
+                 }}
+               >
+                 <CardContent sx={{ flexGrow: 1, p: { xs: 2, sm: 3 } }}>
+                   <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
+                     <Typography variant="h6" component="div" sx={{ 
+                       fontWeight: 600,
+                       fontSize: { xs: '1rem', sm: '1.1rem' }
+                     }}>
+                       {loan.borrowerName}
+                     </Typography>
+                     <Chip
+                       label={loan.status}
+                       color={getStatusColor(loan.status)}
+                       size="small"
+                     />
+                   </Box>
+                   <Divider sx={{ my: 2 }} />
+                   <Grid container spacing={{ xs: 1, sm: 2 }}>
+                     <Grid item xs={6}>
+                       <Box sx={{ 
+                         p: { xs: 1, sm: 2 }, 
+                         borderRadius: 1, 
+                         bgcolor: 'rgba(37, 99, 235, 0.05)',
+                         textAlign: 'center'
+                       }}>
+                         <Typography variant="body2" color="text.secondary">
+                           Loan Amount
+                         </Typography>
+                         <Typography variant="h6" sx={{ fontSize: { xs: '0.9rem', sm: '1rem' } }}>
+                           ₹{loan.amount.toLocaleString()}
+                         </Typography>
+                       </Box>
+                     </Grid>
+                     <Grid item xs={6}>
+                       <Box sx={{ 
+                         p: { xs: 1, sm: 2 }, 
+                         borderRadius: 1, 
+                         bgcolor: 'rgba(37, 99, 235, 0.05)',
+                         textAlign: 'center'
+                       }}>
+                         <Typography variant="body2" color="text.secondary">
+                           Interest Rate
+                         </Typography>
+                         <Typography variant="h6" sx={{ fontSize: { xs: '0.9rem', sm: '1rem' } }}>
+                           {loan.interestRate}%
+                         </Typography>
+                       </Box>
+                     </Grid>
+                     <Grid item xs={6}>
+                       <Box sx={{ 
+                         p: { xs: 1, sm: 2 }, 
+                         borderRadius: 1, 
+                         bgcolor: 'rgba(37, 99, 235, 0.05)',
+                         textAlign: 'center'
+                       }}>
+                         <Typography variant="body2" color="text.secondary">
+                           Term
+                         </Typography>
+                         <Typography variant="h6" sx={{ fontSize: { xs: '0.9rem', sm: '1rem' } }}>
+                           {loan.term} months
+                         </Typography>
+                       </Box>
+                     </Grid>
+                     <Grid item xs={6}>
+                       <Box sx={{ 
+                         p: { xs: 1, sm: 2 }, 
+                         borderRadius: 1, 
+                         bgcolor: 'rgba(37, 99, 235, 0.05)',
+                         textAlign: 'center'
+                       }}>
+                         <Typography variant="body2" color="text.secondary">
+                           EMI Amount
+                         </Typography>
+                         <Typography variant="h6" sx={{ fontSize: { xs: '0.9rem', sm: '1rem' } }}>
+                           ₹{calculateEMI(loan.amount, loan.interestRate, loan.term).toLocaleString()}
+                         </Typography>
+                       </Box>
+                     </Grid>
+                   </Grid>
+                 </CardContent>
+                 <CardActions sx={{ mt: 'auto', p: 2, display: 'flex', flexDirection: 'column', gap: 1 }}>
+                   <Button
+                     fullWidth
+                     variant="contained"
+                     color="primary"
+                     startIcon={<VisibilityIcon />}
+                     onClick={() => handleViewDetails(loan._id)}
+                   >
+                     View Details
+                   </Button>
+                   <Button
+                     fullWidth
+                     variant="outlined"
+                     color="primary"
+                     startIcon={<EditIcon />}
+                     onClick={() => handleEditOpen(loan)}
+                   >
+                     Edit Loan
+                   </Button>
+                   <Button
+                     fullWidth
+                     variant="outlined"
+                     color="error"
+                     onClick={() => handleDeleteOpen(loan)}
+                   >
+                     Delete Loan
+                   </Button>
+                 </CardActions>
+               </Card>
+             </Grid>
+           ))
+         )}
+       </Grid>
+      }
     </Box>
   );
 
@@ -894,140 +927,151 @@ function App() {
         </Box>
       </Box>
 
-      <Grid container spacing={{ xs: 2, sm: 3 }}>
-        {goldLoans.map((loan) => (
-          <Grid item xs={12} sm={6} md={4} key={loan._id}>
-            <Card 
-              sx={{
-                height: '100%',
-                display: 'flex',
-                flexDirection: 'column',
-                '&:hover': {
-                  boxShadow: 6
-                }
-              }}
-            >
-              <CardContent sx={{ flexGrow: 1, p: { xs: 2, sm: 3 } }}>
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
-                  <Typography variant="h6" component="div" sx={{ 
-                    fontWeight: 600,
-                    fontSize: { xs: '1rem', sm: '1.1rem' }
-                  }}>
-                    {loan.borrowerName}
-                  </Typography>
-                  <Chip
-                    label={loan.status}
-                    color={getStatusColor(loan.status)}
-                    size="small"
-                  />
-                </Box>
-                <Divider sx={{ my: 2 }} />
-                <Grid container spacing={{ xs: 1, sm: 2 }}>
-                  <Grid item xs={6}>
-                    <Box sx={{ 
-                      p: { xs: 1, sm: 2 }, 
-                      borderRadius: 1, 
-                      bgcolor: 'rgba(180, 83, 9, 0.05)',
-                      textAlign: 'center'
-                    }}>
-                      <Typography variant="body2" color="text.secondary">
-                        Loan Amount
-                      </Typography>
-                      <Typography variant="h6" sx={{ fontSize: { xs: '0.9rem', sm: '1rem' } }}>
-                        ₹{loan.amount.toLocaleString()}
-                      </Typography>
-                    </Box>
-                  </Grid>
-                  <Grid item xs={6}>
-                    <Box sx={{ 
-                      p: { xs: 1, sm: 2 }, 
-                      borderRadius: 1, 
-                      bgcolor: 'rgba(180, 83, 9, 0.05)',
-                      textAlign: 'center'
-                    }}>
-                      <Typography variant="body2" color="text.secondary">
-                        Interest Rate
-                      </Typography>
-                      <Typography variant="h6" sx={{ fontSize: { xs: '0.9rem', sm: '1rem' } }}>
-                        {loan.interestRate}%
-                      </Typography>
-                    </Box>
-                  </Grid>
-                  <Grid item xs={12}>
-                    <Box sx={{ 
-                      p: { xs: 1, sm: 2 }, 
-                      borderRadius: 1, 
-                      bgcolor: 'rgba(180, 83, 9, 0.05)',
-                      textAlign: 'center'
-                    }}>
-                      <Typography variant="body2" color="text.secondary">
-                        Start Date
-                      </Typography>
-                      <Typography variant="h6" sx={{ fontSize: { xs: '0.9rem', sm: '1rem' } }}>
-                        {new Date(loan.startDate).toLocaleDateString()}
-                      </Typography>
-                    </Box>
-                  </Grid>
-                </Grid>
-              </CardContent>
-              <CardActions sx={{ mt: 'auto', p: 2, display: 'flex', flexDirection: 'column', gap: 1 }}>
-                <Button
-                  fullWidth
-                  variant="contained"
-                  startIcon={<VisibilityIcon />}
-                  onClick={() => handleViewDetails(loan._id)}
-                  sx={{ 
-                    bgcolor: '#b45309',
-                    '&:hover': {
-                      bgcolor: '#a34808',
-                    }
-                  }}
-                >
-                  View Details
-                </Button>
-                <Button
-                  fullWidth
-                  variant="contained"
-                  startIcon={<PaymentIcon />}
-                  onClick={() => handlePaymentDialogOpen(loan)}
-                  sx={{
-                    bgcolor: '#b45309',
-                    '&:hover': {
-                      bgcolor: '#a34808',
-                    }
-                  }}
-                >
-                  Make Payment
-                </Button>
-                <Button
-                  fullWidth
-                  variant="outlined"
-                  startIcon={<EditIcon />}
-                  onClick={() => handleEditOpen(loan)}
-                  sx={{
-                    borderColor: '#b45309',
-                    color: '#b45309',
-                    '&:hover': {
-                      borderColor: '#a34808',
-                      bgcolor: 'rgba(180, 83, 9, 0.04)',
-                    }
-                  }}
-                >
-                  Edit Loan
-                </Button>
-                <Button
-                  fullWidth
-                  variant="outlined"
-                  color="error"
-                  onClick={() => handleDeleteOpen(loan)}
-                >
-                  Delete Loan
-                </Button>
-              </CardActions>
-            </Card>
-          </Grid>
-        ))}
-      </Grid>
+      {loading ? renderLoadingState() : 
+       error ? renderErrorState() :
+       <Grid container spacing={{ xs: 2, sm: 3 }}>
+         {goldLoans.length === 0 ? (
+           <Grid item xs={12}>
+             <Alert severity="info" sx={{ width: '100%' }}>
+               No gold loans found. Add a new loan to get started.
+             </Alert>
+           </Grid>
+         ) : (
+           goldLoans.map((loan) => (
+             <Grid item xs={12} sm={6} md={4} key={loan._id}>
+               <Card 
+                 sx={{
+                   height: '100%',
+                   display: 'flex',
+                   flexDirection: 'column',
+                   '&:hover': {
+                     boxShadow: 6
+                   }
+                 }}
+               >
+                 <CardContent sx={{ flexGrow: 1, p: { xs: 2, sm: 3 } }}>
+                   <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
+                     <Typography variant="h6" component="div" sx={{ 
+                       fontWeight: 600,
+                       fontSize: { xs: '1rem', sm: '1.1rem' }
+                     }}>
+                       {loan.borrowerName}
+                     </Typography>
+                     <Chip
+                       label={loan.status}
+                       color={getStatusColor(loan.status)}
+                       size="small"
+                     />
+                   </Box>
+                   <Divider sx={{ my: 2 }} />
+                   <Grid container spacing={{ xs: 1, sm: 2 }}>
+                     <Grid item xs={6}>
+                       <Box sx={{ 
+                         p: { xs: 1, sm: 2 }, 
+                         borderRadius: 1, 
+                         bgcolor: 'rgba(180, 83, 9, 0.05)',
+                         textAlign: 'center'
+                       }}>
+                         <Typography variant="body2" color="text.secondary">
+                           Loan Amount
+                         </Typography>
+                         <Typography variant="h6" sx={{ fontSize: { xs: '0.9rem', sm: '1rem' } }}>
+                           ₹{loan.amount.toLocaleString()}
+                         </Typography>
+                       </Box>
+                     </Grid>
+                     <Grid item xs={6}>
+                       <Box sx={{ 
+                         p: { xs: 1, sm: 2 }, 
+                         borderRadius: 1, 
+                         bgcolor: 'rgba(180, 83, 9, 0.05)',
+                         textAlign: 'center'
+                       }}>
+                         <Typography variant="body2" color="text.secondary">
+                           Interest Rate
+                         </Typography>
+                         <Typography variant="h6" sx={{ fontSize: { xs: '0.9rem', sm: '1rem' } }}>
+                           {loan.interestRate}%
+                         </Typography>
+                       </Box>
+                     </Grid>
+                     <Grid item xs={12}>
+                       <Box sx={{ 
+                         p: { xs: 1, sm: 2 }, 
+                         borderRadius: 1, 
+                         bgcolor: 'rgba(180, 83, 9, 0.05)',
+                         textAlign: 'center'
+                       }}>
+                         <Typography variant="body2" color="text.secondary">
+                           Start Date
+                         </Typography>
+                         <Typography variant="h6" sx={{ fontSize: { xs: '0.9rem', sm: '1rem' } }}>
+                           {new Date(loan.startDate).toLocaleDateString()}
+                         </Typography>
+                       </Box>
+                     </Grid>
+                   </Grid>
+                 </CardContent>
+                 <CardActions sx={{ mt: 'auto', p: 2, display: 'flex', flexDirection: 'column', gap: 1 }}>
+                   <Button
+                     fullWidth
+                     variant="contained"
+                     startIcon={<VisibilityIcon />}
+                     onClick={() => handleViewDetails(loan._id)}
+                     sx={{ 
+                       bgcolor: '#b45309',
+                       '&:hover': {
+                         bgcolor: '#a34808',
+                       }
+                     }}
+                   >
+                     View Details
+                   </Button>
+                   <Button
+                     fullWidth
+                     variant="contained"
+                     startIcon={<PaymentIcon />}
+                     onClick={() => handlePaymentDialogOpen(loan)}
+                     sx={{
+                       bgcolor: '#b45309',
+                       '&:hover': {
+                         bgcolor: '#a34808',
+                       }
+                     }}
+                   >
+                     Make Payment
+                   </Button>
+                   <Button
+                     fullWidth
+                     variant="outlined"
+                     startIcon={<EditIcon />}
+                     onClick={() => handleEditOpen(loan)}
+                     sx={{
+                       borderColor: '#b45309',
+                       color: '#b45309',
+                       '&:hover': {
+                         borderColor: '#a34808',
+                         bgcolor: 'rgba(180, 83, 9, 0.04)',
+                       }
+                     }}
+                   >
+                     Edit Loan
+                   </Button>
+                   <Button
+                     fullWidth
+                     variant="outlined"
+                     color="error"
+                     onClick={() => handleDeleteOpen(loan)}
+                   >
+                     Delete Loan
+                   </Button>
+                 </CardActions>
+               </Card>
+             </Grid>
+           ))
+         )}
+       </Grid>
+      }
     </Box>
   );
 
@@ -1048,138 +1092,149 @@ function App() {
         </Button>
       </Box>
 
-      <Grid container spacing={{ xs: 2, sm: 3 }}>
-        {creditCards.map((card) => (
-          <Grid item xs={12} sm={6} md={4} key={card._id}>
-            <Card 
-              sx={{
-                height: '100%',
-                display: 'flex',
-                flexDirection: 'column',
-                '&:hover': {
-                  boxShadow: 6
-                }
-              }}
-            >
-              <CardContent sx={{ flexGrow: 1, p: { xs: 2, sm: 3 } }}>
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
-                  <Typography variant="h6" component="div" sx={{ 
-                    fontWeight: 600,
-                    fontSize: { xs: '1rem', sm: '1.1rem' }
-                  }}>
-                    {card.borrowerName}
-                  </Typography>
-                  <Chip
-                    label={card.status}
-                    color={getStatusColor(card.status)}
-                    size="small"
-                  />
-                </Box>
-                <Divider sx={{ my: 2 }} />
-                <Grid container spacing={{ xs: 1, sm: 2 }}>
-                  <Grid item xs={6}>
-                    <Box sx={{ 
-                      p: { xs: 1, sm: 2 }, 
-                      borderRadius: 1, 
-                      bgcolor: 'rgba(37, 99, 235, 0.05)',
-                      textAlign: 'center'
-                    }}>
-                      <Typography variant="body2" color="text.secondary">
-                        Loan Amount
-                      </Typography>
-                      <Typography variant="h6" sx={{ fontSize: { xs: '0.9rem', sm: '1rem' } }}>
-                        ₹{card.amount.toLocaleString()}
-                      </Typography>
-                    </Box>
-                  </Grid>
-                  <Grid item xs={6}>
-                    <Box sx={{ 
-                      p: { xs: 1, sm: 2 }, 
-                      borderRadius: 1, 
-                      bgcolor: 'rgba(37, 99, 235, 0.05)',
-                      textAlign: 'center'
-                    }}>
-                      <Typography variant="body2" color="text.secondary">
-                        Interest Rate
-                      </Typography>
-                      <Typography variant="h6" sx={{ fontSize: { xs: '0.9rem', sm: '1rem' } }}>
-                        {card.interestRate}%
-                      </Typography>
-                    </Box>
-                  </Grid>
-                  <Grid item xs={6}>
-                    <Box sx={{ 
-                      p: { xs: 1, sm: 2 }, 
-                      borderRadius: 1, 
-                      bgcolor: 'rgba(37, 99, 235, 0.05)',
-                      textAlign: 'center'
-                    }}>
-                      <Typography variant="body2" color="text.secondary">
-                        Credit Limit
-                      </Typography>
-                      <Typography variant="h6" sx={{ fontSize: { xs: '0.9rem', sm: '1rem' } }}>
-                        ₹{card.creditLimit.toLocaleString()}
-                      </Typography>
-                    </Box>
-                  </Grid>
-                  <Grid item xs={6}>
-                    <Box sx={{ 
-                      p: { xs: 1, sm: 2 }, 
-                      borderRadius: 1, 
-                      bgcolor: 'rgba(37, 99, 235, 0.05)',
-                      textAlign: 'center'
-                    }}>
-                      <Typography variant="body2" color="text.secondary">
-                        Card Number
-                      </Typography>
-                      <Typography variant="h6" sx={{ fontSize: { xs: '0.9rem', sm: '1rem' } }}>
-                        {card.cardNumber}
-                      </Typography>
-                    </Box>
-                  </Grid>
-                </Grid>
-              </CardContent>
-              <CardActions sx={{ mt: 'auto', p: 2, display: 'flex', flexDirection: 'column', gap: 1 }}>
-                <Button
-                  fullWidth
-                  variant="contained"
-                  color="primary"
-                  startIcon={<VisibilityIcon />}
-                  onClick={() => handleViewDetails(card._id)}
-                >
-                  View Details
-                </Button>
-                <Button
-                  fullWidth
-                  variant="contained"
-                  color="secondary"
-                  startIcon={<PaymentIcon />}
-                  onClick={() => handlePaymentDialogOpen(card)}
-                >
-                  Make Payment
-                </Button>
-                <Button
-                  fullWidth
-                  variant="outlined"
-                  color="primary"
-                  startIcon={<EditIcon />}
-                  onClick={() => handleEditOpen(card)}
-                >
-                  Edit Loan
-                </Button>
-                <Button
-                  fullWidth
-                  variant="outlined"
-                  color="error"
-                  onClick={() => handleDeleteOpen(card)}
-                >
-                  Delete Loan
-                </Button>
-              </CardActions>
-            </Card>
-          </Grid>
-        ))}
-      </Grid>
+      {loading ? renderLoadingState() : 
+       error ? renderErrorState() :
+       <Grid container spacing={{ xs: 2, sm: 3 }}>
+         {creditCards.length === 0 ? (
+           <Grid item xs={12}>
+             <Alert severity="info" sx={{ width: '100%' }}>
+               No credit cards found. Add a new card to get started.
+             </Alert>
+           </Grid>
+         ) : (
+           creditCards.map((card) => (
+             <Grid item xs={12} sm={6} md={4} key={card._id}>
+               <Card 
+                 sx={{
+                   height: '100%',
+                   display: 'flex',
+                   flexDirection: 'column',
+                   '&:hover': {
+                     boxShadow: 6
+                   }
+                 }}
+               >
+                 <CardContent sx={{ flexGrow: 1, p: { xs: 2, sm: 3 } }}>
+                   <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
+                     <Typography variant="h6" component="div" sx={{ 
+                       fontWeight: 600,
+                       fontSize: { xs: '1rem', sm: '1.1rem' }
+                     }}>
+                       {card.borrowerName}
+                     </Typography>
+                     <Chip
+                       label={card.status}
+                       color={getStatusColor(card.status)}
+                       size="small"
+                     />
+                   </Box>
+                   <Divider sx={{ my: 2 }} />
+                   <Grid container spacing={{ xs: 1, sm: 2 }}>
+                     <Grid item xs={6}>
+                       <Box sx={{ 
+                         p: { xs: 1, sm: 2 }, 
+                         borderRadius: 1, 
+                         bgcolor: 'rgba(37, 99, 235, 0.05)',
+                         textAlign: 'center'
+                       }}>
+                         <Typography variant="body2" color="text.secondary">
+                           Loan Amount
+                         </Typography>
+                         <Typography variant="h6" sx={{ fontSize: { xs: '0.9rem', sm: '1rem' } }}>
+                           ₹{card.amount.toLocaleString()}
+                         </Typography>
+                       </Box>
+                     </Grid>
+                     <Grid item xs={6}>
+                       <Box sx={{ 
+                         p: { xs: 1, sm: 2 }, 
+                         borderRadius: 1, 
+                         bgcolor: 'rgba(37, 99, 235, 0.05)',
+                         textAlign: 'center'
+                       }}>
+                         <Typography variant="body2" color="text.secondary">
+                           Interest Rate
+                         </Typography>
+                         <Typography variant="h6" sx={{ fontSize: { xs: '0.9rem', sm: '1rem' } }}>
+                           {card.interestRate}%
+                         </Typography>
+                       </Box>
+                     </Grid>
+                     <Grid item xs={6}>
+                       <Box sx={{ 
+                         p: { xs: 1, sm: 2 }, 
+                         borderRadius: 1, 
+                         bgcolor: 'rgba(37, 99, 235, 0.05)',
+                         textAlign: 'center'
+                       }}>
+                         <Typography variant="body2" color="text.secondary">
+                           Credit Limit
+                         </Typography>
+                         <Typography variant="h6" sx={{ fontSize: { xs: '0.9rem', sm: '1rem' } }}>
+                           ₹{card.creditLimit.toLocaleString()}
+                         </Typography>
+                       </Box>
+                     </Grid>
+                     <Grid item xs={6}>
+                       <Box sx={{ 
+                         p: { xs: 1, sm: 2 }, 
+                         borderRadius: 1, 
+                         bgcolor: 'rgba(37, 99, 235, 0.05)',
+                         textAlign: 'center'
+                       }}>
+                         <Typography variant="body2" color="text.secondary">
+                           Card Number
+                         </Typography>
+                         <Typography variant="h6" sx={{ fontSize: { xs: '0.9rem', sm: '1rem' } }}>
+                           {card.cardNumber}
+                         </Typography>
+                       </Box>
+                     </Grid>
+                   </Grid>
+                 </CardContent>
+                 <CardActions sx={{ mt: 'auto', p: 2, display: 'flex', flexDirection: 'column', gap: 1 }}>
+                   <Button
+                     fullWidth
+                     variant="contained"
+                     color="primary"
+                     startIcon={<VisibilityIcon />}
+                     onClick={() => handleViewDetails(card._id)}
+                   >
+                     View Details
+                   </Button>
+                   <Button
+                     fullWidth
+                     variant="contained"
+                     color="secondary"
+                     startIcon={<PaymentIcon />}
+                     onClick={() => handlePaymentDialogOpen(card)}
+                   >
+                     Make Payment
+                   </Button>
+                   <Button
+                     fullWidth
+                     variant="outlined"
+                     color="primary"
+                     startIcon={<EditIcon />}
+                     onClick={() => handleEditOpen(card)}
+                   >
+                     Edit Loan
+                   </Button>
+                   <Button
+                     fullWidth
+                     variant="outlined"
+                     color="error"
+                     onClick={() => handleDeleteOpen(card)}
+                   >
+                     Delete Loan
+                   </Button>
+                 </CardActions>
+               </Card>
+             </Grid>
+           ))
+         )}
+       </Grid>
+      }
     </Box>
   );
 
