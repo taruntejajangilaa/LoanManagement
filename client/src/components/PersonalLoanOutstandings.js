@@ -49,7 +49,7 @@ function PersonalLoanOutstandings() {
       const startDate = new Date(loan.startDate);
       const term = loan.term;
       const monthlyRate = loan.interestRate / 100 / 12;
-      const emi = (loan.amount * monthlyRate * Math.pow(1 + monthlyRate, term)) / 
+      const originalEmi = (loan.amount * monthlyRate * Math.pow(1 + monthlyRate, term)) / 
                  (Math.pow(1 + monthlyRate, term) - 1);
       let remainingAmount = loan.amount;
 
@@ -85,7 +85,20 @@ function PersonalLoanOutstandings() {
 
         // Calculate interest and principal for this month
         const interest = remainingAmount * monthlyRate;
-        const principal = emi - interest;
+        let principal = 0;
+        let emi = 0;
+
+        // Only calculate EMI and principal if there's remaining amount
+        if (remainingAmount > 0) {
+          if (remainingAmount + interest <= originalEmi) {
+            // Last payment - EMI is just the remaining amount plus interest
+            emi = remainingAmount + interest;
+            principal = remainingAmount;
+          } else {
+            emi = originalEmi;
+            principal = emi - interest;
+          }
+        }
 
         // Calculate outstanding after payment
         const outstandingAfterPayment = Math.max(0, remainingAmount - principal - monthPrepayment);
@@ -105,6 +118,11 @@ function PersonalLoanOutstandings() {
         
         // Update remaining amount for next month
         remainingAmount = outstandingAfterPayment;
+
+        // If loan is fully paid, break the loop
+        if (remainingAmount <= 0) {
+          break;
+        }
       }
     });
 
