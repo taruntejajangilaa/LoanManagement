@@ -91,7 +91,8 @@ function App() {
     term: '',
     startDate: '',
     loanType: 'personal',
-    creditLimit: ''
+    creditLimit: '',
+    cardNumber: ''
   });
   const [prepaymentData, setPrepaymentData] = useState({
     amount: '',
@@ -172,7 +173,8 @@ function App() {
       term: '',
       startDate: '',
       loanType: 'personal',
-      creditLimit: ''
+      creditLimit: '',
+      cardNumber: ''
     });
   };
 
@@ -199,10 +201,20 @@ function App() {
       let submitData;
 
       if (formData.loanType === 'creditCard') {
+        if (!formData.cardNumber) {
+          setSnackbar({
+            open: true,
+            message: 'Card number is required for credit cards',
+            severity: 'error'
+          });
+          return;
+        }
+
         submitData = {
           borrowerName: formData.borrowerName,
           amount: Number(formData.amount),
           creditLimit: Number(formData.amount),
+          cardNumber: formData.cardNumber,
           startDate: formData.startDate,
           loanType: 'creditCard',
           interestRate: 0,
@@ -383,6 +395,17 @@ function App() {
               onChange={handleInputChange}
               margin="normal"
               required
+            />
+            <TextField
+              fullWidth
+              label="Card Number"
+              name="cardNumber"
+              value={formData.cardNumber}
+              onChange={handleInputChange}
+              margin="normal"
+              required
+              placeholder="Enter 16-digit card number"
+              inputProps={{ maxLength: 16 }}
             />
           </>
         ) : (
@@ -592,7 +615,8 @@ function App() {
       term: '',
       startDate: '',
       loanType: type,
-      creditLimit: ''
+      creditLimit: '',
+      cardNumber: ''
     });
     setOpen(true);
   };
@@ -1208,7 +1232,7 @@ function App() {
                          </Typography>
                        </Box>
                      </Grid>
-                     <Grid item xs={12}>
+                     <Grid item xs={6}>
                        <Box sx={{ 
                          p: { xs: 1, sm: 2 }, 
                          borderRadius: 1, 
@@ -1220,6 +1244,21 @@ function App() {
                          </Typography>
                          <Typography variant="h6" sx={{ fontSize: { xs: '0.9rem', sm: '1rem' } }}>
                            ₹{(card.creditLimit || 0).toLocaleString()}
+                         </Typography>
+                       </Box>
+                     </Grid>
+                     <Grid item xs={6}>
+                       <Box sx={{ 
+                         p: { xs: 1, sm: 2 }, 
+                         borderRadius: 1, 
+                         bgcolor: 'rgba(37, 99, 235, 0.05)',
+                         textAlign: 'center'
+                       }}>
+                         <Typography variant="body2" color="text.secondary">
+                           Card Number
+                         </Typography>
+                         <Typography variant="h6" sx={{ fontSize: { xs: '0.9rem', sm: '1rem' } }}>
+                           {card.cardNumber}
                          </Typography>
                        </Box>
                      </Grid>
@@ -1493,6 +1532,16 @@ function App() {
                       onChange={(e) => setEditLoanData({ ...editLoanData, amount: e.target.value, creditLimit: e.target.value })}
                       margin="normal"
                       required
+                    />
+                    <TextField
+                      fullWidth
+                      label="Card Number"
+                      name="cardNumber"
+                      value={editLoanData.cardNumber}
+                      onChange={(e) => setEditLoanData({ ...editLoanData, cardNumber: e.target.value })}
+                      margin="normal"
+                      required
+                      inputProps={{ maxLength: 16 }}
                     />
                   </>
                 ) : (

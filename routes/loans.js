@@ -33,6 +33,7 @@ const loanSchema = new mongoose.Schema({
     date: Date
   }],
   creditLimit: Number,
+  cardNumber: String,
   outstanding: Number,
   spentHistory: [{
     amount: Number,
@@ -86,6 +87,14 @@ router.post('/', async (req, res) => {
       console.log('Missing term for personal loan');
       return res.status(400).json({ 
         message: 'Term is required for personal loans',
+        received: req.body 
+      });
+    }
+
+    if (loanType === 'creditCard' && !req.body.cardNumber) {
+      console.log('Missing card number for credit card');
+      return res.status(400).json({ 
+        message: 'Card number is required for credit cards',
         received: req.body 
       });
     }
