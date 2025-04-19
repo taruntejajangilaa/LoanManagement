@@ -192,7 +192,35 @@ router.post('/:id/prepayment', async (req, res) => {
     if (!loan) {
       return res.status(404).json({ message: 'Loan not found' });
     }
+
+    // Add the prepayment
     loan.prepayments.push(req.body);
+
+    // Calculate total paid amount (including prepayments)
+    const totalPrepaid = loan.prepayments.reduce((sum, p) => sum + p.amount, 0);
+    const totalPaid = loan.payments.reduce((sum, p) => sum + p.amount, 0);
+    const monthlyRate = loan.interestRate / 100 / 12;
+    let remainingAmount = loan.amount;
+    let accumulatedInterest = 0;
+
+    // Calculate remaining amount and interest
+    if (loan.loanType === 'personal') {
+      const emi = (loan.amount * monthlyRate * Math.pow(1 + monthlyRate, loan.term)) / 
+                 (Math.pow(1 + monthlyRate, loan.term) - 1);
+      const totalInterest = (emi * loan.term) - loan.amount;
+      remainingAmount = loan.amount + totalInterest - totalPaid - totalPrepaid;
+    } else {
+      // For gold loans and credit cards
+      accumulatedInterest = (loan.amount * monthlyRate * 
+        (Math.floor((new Date() - new Date(loan.startDate)) / (1000 * 60 * 60 * 24 * 30))));
+      remainingAmount = loan.amount + accumulatedInterest - totalPaid - totalPrepaid;
+    }
+
+    // Update loan status if fully paid
+    if (remainingAmount <= 0) {
+      loan.status = 'paid';
+    }
+
     await loan.save();
     res.json(loan);
   } catch (error) {

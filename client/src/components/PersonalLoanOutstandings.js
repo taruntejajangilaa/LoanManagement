@@ -514,6 +514,24 @@ function PersonalLoanOutstandings() {
                               >
                                 {formatCurrency(loanData?.outstanding || 0)}
                               </Typography>
+                              {loanData?.outstanding <= 0 && (
+                                <Typography 
+                                  variant="body2" 
+                                  sx={{ 
+                                    color: 'success.main',
+                                    fontWeight: 600,
+                                    fontSize: '0.75rem',
+                                    bgcolor: 'success.light',
+                                    px: 1,
+                                    py: 0.25,
+                                    borderRadius: 1,
+                                    display: 'inline-block',
+                                    mt: 0.5
+                                  }}
+                                >
+                                  CLOSED
+                                </Typography>
+                              )}
                             </Box>
                             <Box sx={{ mb: 1 }}>
                               <Typography 
