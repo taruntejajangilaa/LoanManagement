@@ -417,7 +417,10 @@ function PersonalLoanOutstandings() {
                         bgcolor: 'grey.50',
                         fontWeight: 600,
                         color: 'text.primary',
-                        whiteSpace: 'nowrap'
+                        whiteSpace: 'nowrap',
+                        width: { xs: '100px', sm: '150px' },
+                        minWidth: { xs: '100px', sm: '150px' },
+                        maxWidth: { xs: '100px', sm: '150px' }
                       }}
                     >
                       Month
@@ -469,6 +472,9 @@ function PersonalLoanOutstandings() {
                           fontWeight: 500,
                           whiteSpace: 'nowrap',
                           bgcolor: 'background.paper',
+                          width: { xs: '100px', sm: '150px' },
+                          minWidth: { xs: '100px', sm: '150px' },
+                          maxWidth: { xs: '100px', sm: '150px' },
                           '&:hover': {
                             bgcolor: monthData.isCurrentMonth ? 'rgba(0, 0, 0, 0.08)' : 'grey.100'
                           }
@@ -480,13 +486,14 @@ function PersonalLoanOutstandings() {
                             component="span" 
                             sx={{ 
                               ml: 1,
-                              fontSize: '0.75rem',
+                              fontSize: '0.65rem',
                               color: 'text.secondary',
                               fontWeight: 600,
                               bgcolor: 'rgba(0, 0, 0, 0.1)',
-                              px: 1,
-                              py: 0.5,
-                              borderRadius: 1
+                              px: 0.5,
+                              py: 0.25,
+                              borderRadius: 1,
+                              display: { xs: 'none', sm: 'inline-block' }
                             }}
                           >
                             Current Month
