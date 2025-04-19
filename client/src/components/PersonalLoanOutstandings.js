@@ -378,35 +378,75 @@ function PersonalLoanOutstandings() {
                 border: '1px solid',
                 borderColor: 'divider',
                 minWidth: '800px',
+                maxHeight: '600px',
+                overflow: 'auto',
+                position: 'relative',
                 '& .MuiTableCell-root': {
                   py: { xs: 1, sm: 2 },
                   px: { xs: 1.5, sm: 3 },
                   fontSize: { xs: '0.875rem', sm: '1rem' }
+                },
+                '& .sticky-header': {
+                  position: 'sticky',
+                  top: 0,
+                  backgroundColor: 'grey.50',
+                  zIndex: 3,
+                  borderBottom: '2px solid',
+                  borderColor: 'divider'
+                },
+                '& .sticky-column': {
+                  position: 'sticky',
+                  left: 0,
+                  backgroundColor: 'background.paper',
+                  zIndex: 2,
+                  borderRight: '1px solid',
+                  borderColor: 'divider'
+                },
+                '& .sticky-header.sticky-column': {
+                  zIndex: 4,
+                  backgroundColor: 'grey.50'
                 }
               }}
             >
-              <Table>
+              <Table stickyHeader>
                 <TableHead>
-                  <TableRow sx={{ 
-                    bgcolor: 'grey.50',
-                    '& th': {
-                      fontWeight: 600,
-                      color: 'text.primary',
-                      borderBottom: '2px solid',
-                      borderColor: 'divider',
-                      whiteSpace: 'nowrap'
-                    }
-                  }}>
-                    <TableCell>Month</TableCell>
+                  <TableRow>
+                    <TableCell 
+                      className="sticky-header sticky-column"
+                      sx={{ 
+                        bgcolor: 'grey.50',
+                        fontWeight: 600,
+                        color: 'text.primary',
+                        whiteSpace: 'nowrap'
+                      }}
+                    >
+                      Month
+                    </TableCell>
                     {personalLoans.map(loan => (
                       <TableCell 
                         key={loan._id} 
                         align="right"
+                        className="sticky-header"
+                        sx={{ 
+                          fontWeight: 600,
+                          color: 'text.primary',
+                          whiteSpace: 'nowrap'
+                        }}
                       >
                         {loan.borrowerName}
                       </TableCell>
                     ))}
-                    <TableCell align="right">Total</TableCell>
+                    <TableCell 
+                      align="right"
+                      className="sticky-header"
+                      sx={{ 
+                        fontWeight: 600,
+                        color: 'text.primary',
+                        whiteSpace: 'nowrap'
+                      }}
+                    >
+                      Total
+                    </TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
@@ -420,29 +460,17 @@ function PersonalLoanOutstandings() {
                         },
                         '&:hover': { 
                           bgcolor: monthData.isCurrentMonth ? 'rgba(0, 0, 0, 0.08)' : 'grey.100' 
-                        },
-                        '& td': {
-                          borderBottom: '1px solid',
-                          borderColor: 'divider',
-                          bgcolor: monthData.isCurrentMonth ? 'rgba(0, 0, 0, 0.04)' : 'inherit',
-                          '&:hover': {
-                            bgcolor: monthData.isCurrentMonth ? 'rgba(0, 0, 0, 0.08)' : 'inherit'
-                          }
                         }
                       }}
                     >
                       <TableCell 
+                        className="sticky-column"
                         sx={{ 
                           fontWeight: 500,
-                          borderRight: '1px solid',
-                          borderColor: 'divider',
-                          position: 'sticky',
-                          left: 0,
-                          bgcolor: monthData.isCurrentMonth ? 'rgba(0, 0, 0, 0.04)' : 'inherit',
-                          zIndex: 1,
                           whiteSpace: 'nowrap',
+                          bgcolor: 'background.paper',
                           '&:hover': {
-                            bgcolor: monthData.isCurrentMonth ? 'rgba(0, 0, 0, 0.08)' : 'inherit'
+                            bgcolor: monthData.isCurrentMonth ? 'rgba(0, 0, 0, 0.08)' : 'grey.100'
                           }
                         }}
                       >
