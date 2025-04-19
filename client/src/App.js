@@ -292,6 +292,8 @@ function App() {
         return 'primary';
       case 'defaulted':
         return 'error';
+      case 'closed':
+        return 'warning';
       default:
         return 'default';
     }
@@ -820,9 +822,13 @@ function App() {
                        {loan.borrowerName}
                      </Typography>
                      <Chip
-                       label={loan.status}
+                       label={loan.status === 'closed' ? 'CLOSED' : loan.status}
                        color={getStatusColor(loan.status)}
                        size="small"
+                       sx={{
+                         fontWeight: loan.status === 'closed' ? 600 : 'inherit',
+                         letterSpacing: loan.status === 'closed' ? '0.5px' : 'inherit'
+                       }}
                      />
                    </Box>
                    <Divider sx={{ my: 2 }} />
@@ -1016,9 +1022,13 @@ function App() {
                        {loan.borrowerName}
                      </Typography>
                      <Chip
-                       label={loan.status}
+                       label={loan.status === 'closed' ? 'CLOSED' : loan.status}
                        color={getStatusColor(loan.status)}
                        size="small"
+                       sx={{
+                         fontWeight: loan.status === 'closed' ? 600 : 'inherit',
+                         letterSpacing: loan.status === 'closed' ? '0.5px' : 'inherit'
+                       }}
                      />
                    </Box>
                    <Divider sx={{ my: 2 }} />
@@ -1181,9 +1191,13 @@ function App() {
                        {card.borrowerName}
                      </Typography>
                      <Chip
-                       label={card.status}
+                       label={card.status === 'closed' ? 'CLOSED' : card.status}
                        color={getStatusColor(card.status)}
                        size="small"
+                       sx={{
+                         fontWeight: card.status === 'closed' ? 600 : 'inherit',
+                         letterSpacing: card.status === 'closed' ? '0.5px' : 'inherit'
+                       }}
                      />
                    </Box>
                    <Divider sx={{ my: 2 }} />

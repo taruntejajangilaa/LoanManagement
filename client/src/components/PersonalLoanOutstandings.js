@@ -518,15 +518,16 @@ function PersonalLoanOutstandings() {
                                 <Typography 
                                   variant="body2" 
                                   sx={{ 
-                                    color: 'success.main',
+                                    color: 'error.main',
                                     fontWeight: 600,
                                     fontSize: '0.75rem',
-                                    bgcolor: 'success.light',
+                                    bgcolor: 'error.light',
                                     px: 1,
                                     py: 0.25,
                                     borderRadius: 1,
                                     display: 'inline-block',
-                                    mt: 0.5
+                                    mt: 0.5,
+                                    opacity: 0.9
                                   }}
                                 >
                                   CLOSED
