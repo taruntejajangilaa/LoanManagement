@@ -171,25 +171,6 @@ function LoanDetails({ onBack }) {
     setEmiBreakdown(breakdown);
   };
 
-  const calculateInterestSummary = (loanData, emiBreakdown) => {
-    if (!loanData || !emiBreakdown) return { totalInterest: 0, interestSaved: 0 };
-
-    // Calculate total interest for the entire loan
-    const monthlyRate = loanData.interestRate / 100 / 12;
-    const emi = (loanData.amount * monthlyRate * Math.pow(1 + monthlyRate, loanData.term)) / 
-                (Math.pow(1 + monthlyRate, loanData.term) - 1);
-    const totalInterestForLoan = (emi * loanData.term) - loanData.amount;
-
-    // Calculate actual interest paid with prepayments
-    const totalInterestPaid = emiBreakdown.reduce((sum, month) => sum + month.interest, 0);
-    const interestSaved = totalInterestForLoan - totalInterestPaid;
-
-    return {
-      totalInterest: totalInterestForLoan,
-      interestSaved: interestSaved
-    };
-  };
-
   const handlePrepaymentOpen = () => {
     setPrepaymentDialogOpen(true);
   };

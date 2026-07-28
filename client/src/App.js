@@ -68,7 +68,6 @@ const theme = createTheme({
 });
 
 function App() {
-  const [allLoans, setAllLoans] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [open, setOpen] = useState(false);
@@ -143,7 +142,6 @@ function App() {
       setLoading(true);
       setError(null);
       const response = await loans.getAll();
-      setAllLoans(response.data);
       setPersonalLoans(response.data.filter(loan => !loan.loanType || loan.loanType === 'personal'));
       setGoldLoans(response.data.filter(loan => loan.loanType === 'gold'));
       setCreditCards(response.data.filter(loan => loan.loanType === 'creditCard'));

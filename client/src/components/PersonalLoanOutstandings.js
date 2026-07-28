@@ -26,19 +26,21 @@ function PersonalLoanOutstandings() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    fetchPersonalLoans();
-  }, []);
+    const fetchPersonalLoans = async () => {
+      try {
+        const response = await axios.get(`${API_URL}/loans`);
+        const loans = response.data.filter(loan => !loan.loanType || loan.loanType === 'personal');
+        setPersonalLoans(loans);
+        calculateMonthlyOutstandings(loans);
+      } catch (error) {
+        console.error('Error fetching personal loans:', error);
+      }
+    };
 
-  const fetchPersonalLoans = async () => {
-    try {
-      const response = await axios.get(`${API_URL}/loans`);
-      const personalLoans = response.data.filter(loan => !loan.loanType || loan.loanType === 'personal');
-      setPersonalLoans(personalLoans);
-      calculateMonthlyOutstandings(personalLoans);
-    } catch (error) {
-      console.error('Error fetching personal loans:', error);
-    }
-  };
+    fetchPersonalLoans();
+    // Mount-only fetch; calculateMonthlyOutstandings is stable for this screen
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const calculateMonthlyOutstandings = (loans) => {
     const outstandings = {};
