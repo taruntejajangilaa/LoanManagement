@@ -372,11 +372,11 @@ function PersonalLoanOutstandings() {
               width: '100%',
               maxHeight: '600px',
               overflowY: 'auto',
-              overflowX: 'hidden',
+              overflowX: 'auto',
               position: 'relative',
               '& .MuiTableCell-root': {
                 py: { xs: 0.75, sm: 1.25 },
-                px: { xs: 0.5, sm: 0.75 },
+                px: { xs: 0.75, sm: 1 },
                 fontSize: { xs: '0.7rem', sm: '0.8rem' }
               },
               '& .sticky-header': {
@@ -400,12 +400,12 @@ function PersonalLoanOutstandings() {
                 backgroundColor: 'grey.50'
               },
               '& .amount-col': {
-                width: '1%',
-                whiteSpace: 'nowrap'
+                whiteSpace: 'nowrap',
+                minWidth: { xs: '84px', sm: '96px' }
               }
             }}
           >
-            <Table stickyHeader size="small" sx={{ tableLayout: 'fixed', width: '100%' }}>
+            <Table stickyHeader size="small" sx={{ width: 'max-content', minWidth: '100%' }}>
               <TableHead>
                 <TableRow>
                   <TableCell 
@@ -428,10 +428,7 @@ function PersonalLoanOutstandings() {
                       sx={{ 
                         fontWeight: 600,
                         color: 'text.primary',
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis',
-                        whiteSpace: 'nowrap',
-                        maxWidth: 0
+                        whiteSpace: 'nowrap'
                       }}
                     >
                       {shortenLoanName(loan.borrowerName)}
@@ -502,8 +499,7 @@ function PersonalLoanOutstandings() {
                           className="amount-col"
                           sx={{ 
                             borderRight: '1px solid',
-                            borderColor: 'divider',
-                            maxWidth: 0
+                            borderColor: 'divider'
                           }}
                         >
                           <Box sx={{ mb: 0.5 }}>
