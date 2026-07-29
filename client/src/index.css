@@ -1,3 +1,15 @@
+/* Every font size in the app is rem-based, so the root size sets the whole scale */
+html {
+  font-size: 81.25%;
+}
+
+/* Mobile keeps a slightly larger root because components already drop to 0.65-0.75rem there */
+@media (max-width: 600px) {
+  html {
+    font-size: 87.5%;
+  }
+}
+
 body {
   margin: 0;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
