@@ -142,7 +142,7 @@ function PersonalLoanOutstandings() {
   const formatMonthYear = (monthYear) => {
     const [year, month] = monthYear.split('-');
     const date = new Date(year, month - 1);
-    return date.toLocaleString('default', { month: 'long', year: 'numeric' });
+    return date.toLocaleString('default', { month: 'short', year: '2-digit' });
   };
 
   const formatCurrency = (amount) => {
@@ -151,6 +151,14 @@ function PersonalLoanOutstandings() {
       currency: 'INR',
       maximumFractionDigits: 0
     }).format(amount);
+  };
+
+  // Column width is driven by amounts; headings stay short inside that space
+  const shortenLoanName = (name, maxChars = 8) => {
+    if (!name) return '';
+    const firstWord = name.trim().split(/\s+/)[0];
+    if (firstWord.length <= maxChars) return firstWord;
+    return `${firstWord.slice(0, maxChars - 1)}…`;
   };
 
   const getCurrentMonthData = () => {
@@ -178,7 +186,7 @@ function PersonalLoanOutstandings() {
       maxWidth: '1200px', 
       mx: 'auto', 
       p: { xs: 1, sm: 2, md: 3 },
-      overflowX: 'auto'
+      overflowX: 'hidden'
     }}>
       <Box sx={{ 
         display: 'flex', 
@@ -354,324 +362,273 @@ function PersonalLoanOutstandings() {
         </Grid>
 
         <Grid item xs={12}>
-          <Box sx={{ 
-            width: '100%',
-            overflowX: 'auto',
-            '&::-webkit-scrollbar': {
-              height: '8px'
-            },
-            '&::-webkit-scrollbar-track': {
-              background: 'grey.100',
-              borderRadius: '4px'
-            },
-            '&::-webkit-scrollbar-thumb': {
-              background: 'grey.400',
-              borderRadius: '4px',
-              '&:hover': {
-                background: 'grey.500'
+          <TableContainer 
+            component={Paper} 
+            sx={{ 
+              borderRadius: 2,
+              boxShadow: '0 4px 20px rgba(0,0,0,0.05)',
+              border: '1px solid',
+              borderColor: 'divider',
+              width: '100%',
+              maxHeight: '600px',
+              overflowY: 'auto',
+              overflowX: 'hidden',
+              position: 'relative',
+              '& .MuiTableCell-root': {
+                py: { xs: 0.75, sm: 1.25 },
+                px: { xs: 0.5, sm: 0.75 },
+                fontSize: { xs: '0.7rem', sm: '0.8rem' }
+              },
+              '& .sticky-header': {
+                position: 'sticky',
+                top: 0,
+                backgroundColor: 'grey.50',
+                zIndex: 3,
+                borderBottom: '2px solid',
+                borderColor: 'divider'
+              },
+              '& .sticky-column': {
+                position: 'sticky',
+                left: 0,
+                backgroundColor: 'background.paper',
+                zIndex: 2,
+                borderRight: '1px solid',
+                borderColor: 'divider'
+              },
+              '& .sticky-header.sticky-column': {
+                zIndex: 4,
+                backgroundColor: 'grey.50'
+              },
+              '& .amount-col': {
+                width: '1%',
+                whiteSpace: 'nowrap'
               }
-            }
-          }}>
-            <TableContainer 
-              component={Paper} 
-              sx={{ 
-                borderRadius: 2,
-                boxShadow: '0 4px 20px rgba(0,0,0,0.05)',
-                border: '1px solid',
-                borderColor: 'divider',
-                minWidth: '800px',
-                maxHeight: '600px',
-                overflow: 'auto',
-                position: 'relative',
-                '& .MuiTableCell-root': {
-                  py: { xs: 1, sm: 2 },
-                  px: { xs: 1.5, sm: 3 },
-                  fontSize: { xs: '0.875rem', sm: '1rem' }
-                },
-                '& .sticky-header': {
-                  position: 'sticky',
-                  top: 0,
-                  backgroundColor: 'grey.50',
-                  zIndex: 3,
-                  borderBottom: '2px solid',
-                  borderColor: 'divider'
-                },
-                '& .sticky-column': {
-                  position: 'sticky',
-                  left: 0,
-                  backgroundColor: 'background.paper',
-                  zIndex: 2,
-                  borderRight: '1px solid',
-                  borderColor: 'divider'
-                },
-                '& .sticky-header.sticky-column': {
-                  zIndex: 4,
-                  backgroundColor: 'grey.50'
-                }
-              }}
-            >
-              <Table stickyHeader>
-                <TableHead>
-                  <TableRow>
+            }}
+          >
+            <Table stickyHeader size="small" sx={{ tableLayout: 'fixed', width: '100%' }}>
+              <TableHead>
+                <TableRow>
+                  <TableCell 
+                    className="sticky-header sticky-column"
+                    sx={{ 
+                      bgcolor: 'grey.50',
+                      fontWeight: 600,
+                      color: 'text.primary',
+                      width: { xs: '72px', sm: '96px' }
+                    }}
+                  >
+                    Month
+                  </TableCell>
+                  {personalLoans.map(loan => (
                     <TableCell 
-                      className="sticky-header sticky-column"
-                      sx={{ 
-                        bgcolor: 'grey.50',
-                        fontWeight: 600,
-                        color: 'text.primary',
-                        whiteSpace: 'nowrap',
-                        width: { xs: '100px', sm: '150px' },
-                        minWidth: { xs: '100px', sm: '150px' },
-                        maxWidth: { xs: '100px', sm: '150px' }
-                      }}
-                    >
-                      Month
-                    </TableCell>
-                    {personalLoans.map(loan => (
-                      <TableCell 
-                        key={loan._id} 
-                        align="right"
-                        className="sticky-header"
-                        sx={{ 
-                          fontWeight: 600,
-                          color: 'text.primary',
-                          whiteSpace: 'nowrap'
-                        }}
-                      >
-                        {loan.borrowerName}
-                      </TableCell>
-                    ))}
-                    <TableCell 
+                      key={loan._id} 
                       align="right"
-                      className="sticky-header"
+                      className="sticky-header amount-col"
+                      title={loan.borrowerName}
                       sx={{ 
                         fontWeight: 600,
                         color: 'text.primary',
-                        whiteSpace: 'nowrap'
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        whiteSpace: 'nowrap',
+                        maxWidth: 0
                       }}
                     >
-                      Total
+                      {shortenLoanName(loan.borrowerName)}
                     </TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {monthlyOutstandings.map((monthData, index) => (
-                    <TableRow 
-                      key={monthData.monthYear}
-                      data-current-month={monthData.isCurrentMonth}
+                  ))}
+                  <TableCell 
+                    align="right"
+                    className="sticky-header amount-col"
+                    sx={{ 
+                      fontWeight: 600,
+                      color: 'text.primary',
+                      width: { xs: '72px', sm: '88px' }
+                    }}
+                  >
+                    Total
+                  </TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {monthlyOutstandings.map((monthData) => (
+                  <TableRow 
+                    key={monthData.monthYear}
+                    data-current-month={monthData.isCurrentMonth}
+                    sx={{ 
+                      '&:nth-of-type(odd)': { 
+                        bgcolor: monthData.isCurrentMonth ? 'rgba(0, 0, 0, 0.04)' : 'grey.50' 
+                      },
+                      '&:hover': { 
+                        bgcolor: monthData.isCurrentMonth ? 'rgba(0, 0, 0, 0.08)' : 'grey.100' 
+                      }
+                    }}
+                  >
+                    <TableCell 
+                      className="sticky-column"
                       sx={{ 
-                        '&:nth-of-type(odd)': { 
-                          bgcolor: monthData.isCurrentMonth ? 'rgba(0, 0, 0, 0.04)' : 'grey.50' 
-                        },
-                        '&:hover': { 
-                          bgcolor: monthData.isCurrentMonth ? 'rgba(0, 0, 0, 0.08)' : 'grey.100' 
+                        fontWeight: 500,
+                        bgcolor: 'background.paper',
+                        width: { xs: '72px', sm: '96px' },
+                        whiteSpace: 'normal',
+                        lineHeight: 1.25,
+                        '&:hover': {
+                          bgcolor: monthData.isCurrentMonth ? 'rgba(0, 0, 0, 0.08)' : 'grey.100'
                         }
                       }}
                     >
-                      <TableCell 
-                        className="sticky-column"
-                        sx={{ 
-                          fontWeight: 500,
-                          whiteSpace: 'nowrap',
-                          bgcolor: 'background.paper',
-                          width: { xs: '100px', sm: '150px' },
-                          minWidth: { xs: '100px', sm: '150px' },
-                          maxWidth: { xs: '100px', sm: '150px' },
-                          '&:hover': {
-                            bgcolor: monthData.isCurrentMonth ? 'rgba(0, 0, 0, 0.08)' : 'grey.100'
-                          }
-                        }}
-                      >
-                        {formatMonthYear(monthData.monthYear)}
-                        {monthData.isCurrentMonth && (
-                          <Typography 
-                            component="span" 
-                            sx={{ 
-                              ml: 1,
-                              fontSize: '0.65rem',
-                              color: 'text.secondary',
-                              fontWeight: 600,
-                              bgcolor: 'rgba(0, 0, 0, 0.1)',
-                              px: 0.5,
-                              py: 0.25,
-                              borderRadius: 1,
-                              display: { xs: 'none', sm: 'inline-block' }
-                            }}
-                          >
-                            Current Month
-                          </Typography>
-                        )}
-                      </TableCell>
-                      {personalLoans.map(loan => {
-                        const loanData = monthData.loans[loan._id];
-                        return (
-                          <TableCell 
-                            key={loan._id} 
-                            align="right"
-                            sx={{ 
-                              borderRight: '1px solid',
-                              borderColor: 'divider'
-                            }}
-                          >
-                            <Box sx={{ mb: 1 }}>
-                              <Typography 
-                                variant="body1" 
-                                sx={{ 
-                                  fontWeight: 600,
-                                  fontSize: { xs: '0.875rem', sm: '1rem' }
-                                }}
-                              >
-                                {formatCurrency(loanData?.outstanding || 0)}
-                              </Typography>
-                              {loanData?.outstanding <= 0 && (
-                                <Typography 
-                                  variant="body2" 
-                                  sx={{ 
-                                    color: 'error.main',
-                                    fontWeight: 600,
-                                    fontSize: '0.75rem',
-                                    bgcolor: 'error.light',
-                                    px: 1,
-                                    py: 0.25,
-                                    borderRadius: 1,
-                                    display: 'inline-block',
-                                    mt: 0.5,
-                                    opacity: 0.9
-                                  }}
-                                >
-                                  CLOSED
-                                </Typography>
-                              )}
-                            </Box>
-                            <Box sx={{ mb: 1 }}>
+                      {formatMonthYear(monthData.monthYear)}
+                      {monthData.isCurrentMonth && (
+                        <Typography 
+                          component="span" 
+                          sx={{ 
+                            display: 'block',
+                            mt: 0.25,
+                            fontSize: '0.6rem',
+                            color: 'text.secondary',
+                            fontWeight: 600
+                          }}
+                        >
+                          Current
+                        </Typography>
+                      )}
+                    </TableCell>
+                    {personalLoans.map(loan => {
+                      const loanData = monthData.loans[loan._id];
+                      return (
+                        <TableCell 
+                          key={loan._id} 
+                          align="right"
+                          className="amount-col"
+                          sx={{ 
+                            borderRight: '1px solid',
+                            borderColor: 'divider',
+                            maxWidth: 0
+                          }}
+                        >
+                          <Box sx={{ mb: 0.5 }}>
+                            <Typography 
+                              variant="body2" 
+                              sx={{ 
+                                fontWeight: 600,
+                                fontSize: { xs: '0.7rem', sm: '0.8rem' },
+                                whiteSpace: 'nowrap'
+                              }}
+                            >
+                              {formatCurrency(loanData?.outstanding || 0)}
+                            </Typography>
+                            {loanData?.outstanding <= 0 && (
                               <Typography 
                                 variant="body2" 
                                 sx={{ 
                                   color: 'error.main',
-                                  fontWeight: 500,
-                                  display: 'flex',
-                                  alignItems: 'center',
-                                  justifyContent: 'flex-end',
-                                  gap: 0.5,
-                                  fontSize: { xs: '0.75rem', sm: '0.875rem' }
+                                  fontWeight: 600,
+                                  fontSize: '0.6rem',
+                                  bgcolor: 'error.light',
+                                  px: 0.5,
+                                  py: 0.15,
+                                  borderRadius: 1,
+                                  display: 'inline-block',
+                                  mt: 0.25,
+                                  opacity: 0.9
                                 }}
                               >
-                                <span>EMI:</span>
-                                {formatCurrency(loanData?.emi || 0)}
+                                CLOSED
                               </Typography>
-                            </Box>
-                            <Box sx={{ mb: 1 }}>
-                              <Typography 
-                                variant="body2" 
-                                sx={{ 
-                                  color: 'info.main',
-                                  fontWeight: 500,
-                                  display: 'flex',
-                                  alignItems: 'center',
-                                  justifyContent: 'flex-end',
-                                  gap: 0.5,
-                                  fontSize: { xs: '0.75rem', sm: '0.875rem' }
-                                }}
-                              >
-                                <span>Principal:</span>
-                                {formatCurrency(loanData?.principal || 0)}
-                              </Typography>
-                            </Box>
-                            {loanData?.prepayment > 0 && (
-                              <Box>
-                                <Typography 
-                                  variant="body2" 
-                                  sx={{ 
-                                    color: 'success.main',
-                                    fontWeight: 500,
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'flex-end',
-                                    gap: 0.5,
-                                    fontSize: { xs: '0.75rem', sm: '0.875rem' }
-                                  }}
-                                >
-                                  <span>Prepayment:</span>
-                                  {formatCurrency(loanData.prepayment)}
-                                </Typography>
-                              </Box>
                             )}
-                          </TableCell>
-                        );
-                      })}
-                      <TableCell align="right">
-                        <Box sx={{ mb: 1 }}>
-                          <Typography 
-                            variant="body1" 
-                            sx={{ 
-                              fontWeight: 700,
-                              color: 'primary.main',
-                              fontSize: { xs: '0.875rem', sm: '1rem' }
-                            }}
-                          >
-                            {formatCurrency(monthData.total)}
-                          </Typography>
-                        </Box>
-                        <Box sx={{ mb: 1 }}>
+                          </Box>
                           <Typography 
                             variant="body2" 
                             sx={{ 
                               color: 'error.main',
-                              fontWeight: 600,
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'flex-end',
-                              gap: 0.5,
-                              fontSize: { xs: '0.75rem', sm: '0.875rem' }
+                              fontWeight: 500,
+                              fontSize: { xs: '0.6rem', sm: '0.7rem' },
+                              whiteSpace: 'nowrap'
                             }}
                           >
-                            <span>EMI:</span>
-                            {formatCurrency(monthData.totalEMI)}
+                            E {formatCurrency(loanData?.emi || 0)}
                           </Typography>
-                        </Box>
-                        <Box sx={{ mb: 1 }}>
                           <Typography 
                             variant="body2" 
                             sx={{ 
                               color: 'info.main',
-                              fontWeight: 600,
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'flex-end',
-                              gap: 0.5,
-                              fontSize: { xs: '0.75rem', sm: '0.875rem' }
+                              fontWeight: 500,
+                              fontSize: { xs: '0.6rem', sm: '0.7rem' },
+                              whiteSpace: 'nowrap'
                             }}
                           >
-                            <span>Principal:</span>
-                            {formatCurrency(monthData.totalPrincipal)}
+                            P {formatCurrency(loanData?.principal || 0)}
                           </Typography>
-                        </Box>
-                        {monthData.totalPrepayment > 0 && (
-                          <Box>
+                          {loanData?.prepayment > 0 && (
                             <Typography 
                               variant="body2" 
                               sx={{ 
                                 color: 'success.main',
-                                fontWeight: 600,
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'flex-end',
-                                gap: 0.5,
-                                fontSize: { xs: '0.75rem', sm: '0.875rem' }
+                                fontWeight: 500,
+                                fontSize: { xs: '0.6rem', sm: '0.7rem' },
+                                whiteSpace: 'nowrap'
                               }}
                             >
-                              <span>Prepayment:</span>
-                              {formatCurrency(monthData.totalPrepayment)}
+                              PP {formatCurrency(loanData.prepayment)}
                             </Typography>
-                          </Box>
-                        )}
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </TableContainer>
-          </Box>
+                          )}
+                        </TableCell>
+                      );
+                    })}
+                    <TableCell align="right" className="amount-col" sx={{ width: { xs: '72px', sm: '88px' } }}>
+                      <Typography 
+                        variant="body2" 
+                        sx={{ 
+                          fontWeight: 700,
+                          color: 'primary.main',
+                          fontSize: { xs: '0.7rem', sm: '0.8rem' },
+                          mb: 0.5,
+                          whiteSpace: 'nowrap'
+                        }}
+                      >
+                        {formatCurrency(monthData.total)}
+                      </Typography>
+                      <Typography 
+                        variant="body2" 
+                        sx={{ 
+                          color: 'error.main',
+                          fontWeight: 600,
+                          fontSize: { xs: '0.6rem', sm: '0.7rem' },
+                          whiteSpace: 'nowrap'
+                        }}
+                      >
+                        E {formatCurrency(monthData.totalEMI)}
+                      </Typography>
+                      <Typography 
+                        variant="body2" 
+                        sx={{ 
+                          color: 'info.main',
+                          fontWeight: 600,
+                          fontSize: { xs: '0.6rem', sm: '0.7rem' },
+                          whiteSpace: 'nowrap'
+                        }}
+                      >
+                        P {formatCurrency(monthData.totalPrincipal)}
+                      </Typography>
+                      {monthData.totalPrepayment > 0 && (
+                        <Typography 
+                          variant="body2" 
+                          sx={{ 
+                            color: 'success.main',
+                            fontWeight: 600,
+                            fontSize: { xs: '0.6rem', sm: '0.7rem' },
+                            whiteSpace: 'nowrap'
+                          }}
+                        >
+                          PP {formatCurrency(monthData.totalPrepayment)}
+                        </Typography>
+                      )}
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </TableContainer>
         </Grid>
       </Grid>
     </Box>
