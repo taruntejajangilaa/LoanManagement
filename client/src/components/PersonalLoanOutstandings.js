@@ -401,7 +401,7 @@ function PersonalLoanOutstandings() {
               },
               '& .amount-col': {
                 whiteSpace: 'nowrap',
-                minWidth: { xs: '84px', sm: '96px' }
+                minWidth: { xs: '124px', sm: '136px' }
               }
             }}
           >
@@ -439,8 +439,7 @@ function PersonalLoanOutstandings() {
                     className="sticky-header amount-col"
                     sx={{ 
                       fontWeight: 600,
-                      color: 'text.primary',
-                      width: { xs: '72px', sm: '88px' }
+                      color: 'text.primary'
                     }}
                   >
                     Total
@@ -542,7 +541,7 @@ function PersonalLoanOutstandings() {
                               whiteSpace: 'nowrap'
                             }}
                           >
-                            E {formatCurrency(loanData?.emi || 0)}
+                            EMI: {formatCurrency(loanData?.emi || 0)}
                           </Typography>
                           <Typography 
                             variant="body2" 
@@ -553,7 +552,7 @@ function PersonalLoanOutstandings() {
                               whiteSpace: 'nowrap'
                             }}
                           >
-                            P {formatCurrency(loanData?.principal || 0)}
+                            Principal: {formatCurrency(loanData?.principal || 0)}
                           </Typography>
                           {loanData?.prepayment > 0 && (
                             <Typography 
@@ -565,13 +564,13 @@ function PersonalLoanOutstandings() {
                                 whiteSpace: 'nowrap'
                               }}
                             >
-                              PP {formatCurrency(loanData.prepayment)}
+                              Prepayment: {formatCurrency(loanData.prepayment)}
                             </Typography>
                           )}
                         </TableCell>
                       );
                     })}
-                    <TableCell align="right" className="amount-col" sx={{ width: { xs: '72px', sm: '88px' } }}>
+                    <TableCell align="right" className="amount-col">
                       <Typography 
                         variant="body2" 
                         sx={{ 
@@ -593,7 +592,7 @@ function PersonalLoanOutstandings() {
                           whiteSpace: 'nowrap'
                         }}
                       >
-                        E {formatCurrency(monthData.totalEMI)}
+                        EMI: {formatCurrency(monthData.totalEMI)}
                       </Typography>
                       <Typography 
                         variant="body2" 
@@ -604,7 +603,7 @@ function PersonalLoanOutstandings() {
                           whiteSpace: 'nowrap'
                         }}
                       >
-                        P {formatCurrency(monthData.totalPrincipal)}
+                        Principal: {formatCurrency(monthData.totalPrincipal)}
                       </Typography>
                       {monthData.totalPrepayment > 0 && (
                         <Typography 
@@ -616,7 +615,7 @@ function PersonalLoanOutstandings() {
                             whiteSpace: 'nowrap'
                           }}
                         >
-                          PP {formatCurrency(monthData.totalPrepayment)}
+                          Prepayment: {formatCurrency(monthData.totalPrepayment)}
                         </Typography>
                       )}
                     </TableCell>
